@@ -20,8 +20,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Umbrela nu este activă." }, { status: 403 });
   }
 
-  // Determine role
-  let role: "owner" | "guest" = "owner";
+  // Check if this phone is owner at ANY umbrella (registered at reception)
+  let homeUmbrellaId: string | null = null;
+  let isRegistered = false;
+
+  for (const [uId, u] of Object.entries(MOCK_UMBRELLAS)) {
+    if (u.sessionId) {
+      const sess = MOCK_SESSIONS[u.sessionId];
+      if (sess && !sess.closed && sess.ownerPhone === phone) {
+        homeUmbrellaId = uId;
+        isRegistered = true;
+        break;
+      }
+    }
+  }
+
+  // Determine role for THIS umbrella
+  let role: "owner" | "guest" = "guest";
   let sessionId = umbrella.sessionId;
 
   if (sessionId) {
@@ -34,7 +49,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } else {
-    // Create new session
+    // No session on this umbrella — first person becomes owner
     sessionId = `sess-${generateId()}`;
     MOCK_SESSIONS[sessionId] = {
       id: sessionId,
@@ -47,6 +62,10 @@ export async function POST(req: NextRequest) {
     };
     MOCK_UMBRELLAS[umbrellaId] = { ...umbrella, sessionId };
     role = "owner";
+    if (!homeUmbrellaId) {
+      homeUmbrellaId = umbrellaId;
+      isRegistered = true;
+    }
   }
 
   return NextResponse.json({
@@ -56,6 +75,8 @@ export async function POST(req: NextRequest) {
       sessionId,
       phone,
       umbrellaId,
+      homeUmbrellaId: homeUmbrellaId || null,
+      isRegistered: isRegistered || role === "owner",
       joinedAt: new Date().toISOString(),
     },
   });

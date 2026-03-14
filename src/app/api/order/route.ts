@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
 
   const {
     umbrellaId,
+    deliveryUmbrellaId,
+    billingUmbrellaId,
     sessionId,
     guestPhone,
     role,
@@ -16,6 +18,8 @@ export async function POST(req: NextRequest) {
     ownerApprovalRequired = false,
   } = body as {
     umbrellaId: string;
+    deliveryUmbrellaId?: string;
+    billingUmbrellaId?: string;
     sessionId: string;
     guestPhone: string;
     role: "owner" | "guest";
@@ -38,6 +42,8 @@ export async function POST(req: NextRequest) {
   const order: Order = {
     id: `ord-${generateId()}`,
     umbrellaId,
+    deliveryUmbrellaId: deliveryUmbrellaId || umbrellaId,
+    billingUmbrellaId: billingUmbrellaId || umbrellaId,
     sessionId,
     guestPhone,
     role,

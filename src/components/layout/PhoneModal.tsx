@@ -43,6 +43,8 @@ export function PhoneModal({ umbrellaId, onClose }: PhoneModalProps) {
         role: json.data.role,
         sessionId: json.data.sessionId,
         umbrellaId: json.data.umbrellaId,
+        homeUmbrellaId: json.data.homeUmbrellaId || undefined,
+        isRegistered: json.data.isRegistered ?? true,
         joinedAt: json.data.joinedAt,
       });
       onClose();

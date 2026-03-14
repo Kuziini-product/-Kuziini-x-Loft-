@@ -10,6 +10,8 @@ import { formatPrice } from "@/lib/utils";
 import { PhoneModal } from "@/components/layout/PhoneModal";
 import type { CartItem } from "@/types";
 
+type BillingOption = "this-umbrella" | "home-umbrella" | "owner-approval";
+
 export default function CartPage({ params }: { params: { umbrellaId: string } }) {
   const { umbrellaId } = params;
   const router = useRouter();
@@ -17,11 +19,19 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
   const { userSession, addOrder } = useSessionStore();
   const [loading, setLoading] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
-  const [ownerApproval, setOwnerApproval] = useState(false);
+  const [billingOption, setBillingOption] = useState<BillingOption>("this-umbrella");
   const [error, setError] = useState<string | null>(null);
   const [globalNotes, setGlobalNotes] = useState("");
 
   const totalAmount = total();
+
+  // Determine user context
+  const isFromDifferentUmbrella = userSession?.homeUmbrellaId && userSession.homeUmbrellaId !== umbrellaId;
+  const isUnregistered = userSession && !userSession.isRegistered;
+  const isGuest = userSession?.role === "guest";
+
+  // Unregistered guests must always request owner approval
+  const needsOwnerApproval = isUnregistered || billingOption === "owner-approval";
 
   async function handleOrder() {
     if (!userSession) {
@@ -36,11 +46,15 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           umbrellaId,
+          deliveryUmbrellaId: umbrellaId, // always deliver to scanned umbrella
+          billingUmbrellaId: billingOption === "home-umbrella"
+            ? userSession.homeUmbrellaId
+            : umbrellaId,
           sessionId: userSession.sessionId,
           guestPhone: userSession.phone,
           role: userSession.role,
           items,
-          ownerApprovalRequired: userSession.role === "guest" && ownerApproval,
+          ownerApprovalRequired: needsOwnerApproval,
         }),
       });
       const json = await res.json();
@@ -129,17 +143,92 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
             />
           </div>
 
-          {/* Guest option */}
-          {userSession?.role === "guest" && (
+          {/* ═══ Unregistered guest: forced owner approval ═══ */}
+          {isUnregistered && (
+            <div className="bg-amber-500/10 border border-amber-500/20 p-4">
+              <p className="text-sm font-bold text-amber-400 mb-1 tracking-wide">
+                ⚠️ Neînregistrat la recepție
+              </p>
+              <p className="text-xs text-white/40 leading-relaxed">
+                Comanda va fi trimisă owner-ului umbrelei pentru aprobare.
+                Acesta trebuie să valideze comanda ta înainte de procesare.
+              </p>
+            </div>
+          )}
+
+          {/* ═══ Guest from different umbrella: billing options ═══ */}
+          {isFromDifferentUmbrella && !isUnregistered && (
+            <div className="bg-white/[0.03] border border-white/[0.06] p-4">
+              <p className="text-sm font-bold text-white mb-1 tracking-wide">
+                ⛱️ Vizitezi de la umbrela {userSession.homeUmbrellaId}
+              </p>
+              <p className="text-xs text-white/30 mb-3">
+                Comanda se livrează aici (umbrela {umbrellaId}). Alege unde se pune pe notă:
+              </p>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setBillingOption("this-umbrella")}
+                  className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
+                    billingOption === "this-umbrella"
+                      ? "border-[#C9AB81] bg-[#C9AB81]/10"
+                      : "border-white/[0.06] bg-white/[0.03]"
+                  }`}
+                >
+                  <span className="text-lg">🧾</span>
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      Notă separată aici
+                    </p>
+                    <p className="text-xs text-white/40">Plătești pe umbrela {umbrellaId}</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setBillingOption("home-umbrella")}
+                  className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
+                    billingOption === "home-umbrella"
+                      ? "border-[#C9AB81] bg-[#C9AB81]/10"
+                      : "border-white/[0.06] bg-white/[0.03]"
+                  }`}
+                >
+                  <span className="text-lg">🏠</span>
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      Pe nota umbrelei mele ({userSession.homeUmbrellaId})
+                    </p>
+                    <p className="text-xs text-white/40">Split pe nota ta de acasă</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setBillingOption("owner-approval")}
+                  className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
+                    billingOption === "owner-approval"
+                      ? "border-[#C9AB81] bg-[#C9AB81]/10"
+                      : "border-white/[0.06] bg-white/[0.03]"
+                  }`}
+                >
+                  <span className="text-lg">👑</span>
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      Pe nota owner-ului acestei umbrele
+                    </p>
+                    <p className="text-xs text-white/40">Owner-ul trebuie să aprobe</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ Regular guest (same umbrella): owner attach option ═══ */}
+          {isGuest && !isFromDifferentUmbrella && !isUnregistered && (
             <div className="bg-white/[0.03] border border-white/[0.06] p-4">
               <p className="text-sm font-bold text-white mb-3 tracking-wide">
                 🤝 Cum vrei să trimiți comanda?
               </p>
               <div className="space-y-2">
                 <button
-                  onClick={() => setOwnerApproval(false)}
+                  onClick={() => setBillingOption("this-umbrella")}
                   className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
-                    !ownerApproval
+                    billingOption === "this-umbrella"
                       ? "border-[#C9AB81] bg-[#C9AB81]/10"
                       : "border-white/[0.06] bg-white/[0.03]"
                   }`}
@@ -153,9 +242,9 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
                   </div>
                 </button>
                 <button
-                  onClick={() => setOwnerApproval(true)}
+                  onClick={() => setBillingOption("owner-approval")}
                   className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
-                    ownerApproval
+                    billingOption === "owner-approval"
                       ? "border-[#C9AB81] bg-[#C9AB81]/10"
                       : "border-white/[0.06] bg-white/[0.03]"
                   }`}
@@ -193,15 +282,26 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
             </div>
           </div>
 
-          {/* Umbrella */}
-          <div className="flex items-center justify-between bg-[#C9AB81]/10 border border-[#C9AB81]/20 px-4 py-3">
-            <span className="text-sm text-[#C9AB81] font-bold tracking-wide">
-              ⛱️ Umbrela {umbrellaId}
-            </span>
-            {userSession && (
-              <span className="text-xs text-white/40">
-                {userSession.phone}
+          {/* Delivery & billing info */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between bg-[#C9AB81]/10 border border-[#C9AB81]/20 px-4 py-3">
+              <span className="text-sm text-[#C9AB81] font-bold tracking-wide">
+                📍 Livrare: Umbrela {umbrellaId}
               </span>
+            </div>
+            {isFromDifferentUmbrella && billingOption === "home-umbrella" && (
+              <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] px-4 py-3">
+                <span className="text-sm text-white/60 font-bold tracking-wide">
+                  🧾 Nota: Umbrela {userSession?.homeUmbrellaId}
+                </span>
+              </div>
+            )}
+            {needsOwnerApproval && (
+              <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 px-4 py-3">
+                <span className="text-sm text-amber-400 font-bold tracking-wide">
+                  👑 Necesită aprobare owner
+                </span>
+              </div>
             )}
           </div>
 
@@ -219,8 +319,10 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
             loading={loading}
             icon={<ShoppingBag className="w-5 h-5" />}
           >
-            {ownerApproval && userSession?.role === "guest"
+            {needsOwnerApproval
               ? "Trimite cerere owner"
+              : billingOption === "home-umbrella"
+              ? `Comandă · Nota pe ${userSession?.homeUmbrellaId}`
               : "Plasează comanda"}
           </Button>
         </div>
@@ -232,7 +334,6 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
 function CartItemRow({
   item,
   onUpdateQty,
-  onRemove,
 }: {
   item: CartItem;
   onUpdateQty: (q: number) => void;

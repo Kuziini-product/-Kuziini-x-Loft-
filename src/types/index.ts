@@ -28,6 +28,8 @@ export interface UserSession {
   role: UserRole;
   sessionId: string;
   umbrellaId: string;
+  homeUmbrellaId?: string; // umbrella where user is registered at reception
+  isRegistered: boolean;   // registered at reception (any umbrella)
   joinedAt: string;
 }
 
@@ -108,6 +110,8 @@ export interface OrderItem {
 export interface Order {
   id: string;
   umbrellaId: string;
+  deliveryUmbrellaId: string;  // where to deliver (scanned umbrella)
+  billingUmbrellaId: string;   // which umbrella's bill to charge
   sessionId: string;
   guestPhone: string;
   role: UserRole;
