@@ -190,5 +190,9 @@ export interface PromoBanner {
   title: string;
   subtitle?: string;
   emoji?: string;
+  image?: string; // base64 data URL
   color: string;
+  order: number;
 }
+
+export type BannerCategory = "loft" | "kuziini";

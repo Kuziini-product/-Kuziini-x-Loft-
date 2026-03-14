@@ -1773,29 +1773,62 @@ export const MOCK_CREDIT_STATUS: CreditStatus = {
 
 // ─── Promo Banners ────────────────────────────────────────────────────────────
 
-export const PROMO_BANNERS: PromoBanner[] = [
+export const LOFT_BANNERS: PromoBanner[] = [
   {
-    id: "promo-1",
+    id: "loft-1",
     title: "Happy Hour",
     subtitle: "Cocktailuri 2×1 · 15:00–17:00",
     emoji: "🍹",
     color: "from-coral-400 to-coral-600",
+    order: 0,
   },
   {
-    id: "promo-2",
+    id: "loft-2",
     title: "LOFT Signature",
     subtitle: "Moft La Loft · Grey Goose & Lime · 55 RON",
     emoji: "✨",
     color: "from-ocean-400 to-ocean-600",
+    order: 1,
   },
   {
-    id: "promo-3",
+    id: "loft-3",
     title: "Weekend Special",
     subtitle: "Glazed Octopus + Prosecco la 195 RON",
     emoji: "🐙",
     color: "from-sand-400 to-sand-600",
+    order: 2,
   },
 ];
+
+export const KUZIINI_BANNERS: PromoBanner[] = [
+  {
+    id: "kuziini-1",
+    title: "Kuziini Fresh",
+    subtitle: "Smoothie-uri naturale din fructe proaspete",
+    emoji: "🥤",
+    color: "from-green-400 to-green-600",
+    order: 0,
+  },
+  {
+    id: "kuziini-2",
+    title: "Kuziini Brunch",
+    subtitle: "Brunch zilnic · 10:00–13:00",
+    emoji: "🥞",
+    color: "from-amber-400 to-amber-600",
+    order: 1,
+  },
+  {
+    id: "kuziini-3",
+    title: "Concept Store",
+    subtitle: "Descoperă colecția de vară Kuziini",
+    emoji: "🛍️",
+    color: "from-purple-400 to-purple-600",
+    order: 2,
+  },
+];
+
+// Keep backward compat reference
+export const PROMO_BANNERS: PromoBanner[] = LOFT_BANNERS;
 
 // ─── Mock Guest Requests ──────────────────────────────────────────────────────
 

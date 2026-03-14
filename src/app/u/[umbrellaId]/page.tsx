@@ -16,7 +16,6 @@ import { Spinner } from "@/components/ui";
 import { useSessionStore } from "@/store";
 import { cn } from "@/lib/utils";
 import type { Umbrella, PromoBanner } from "@/types";
-import { PROMO_BANNERS } from "@/lib/mock-data";
 
 async function fetchUmbrella(id: string) {
   const res = await fetch(`/api/umbrella/${id}`);
@@ -33,19 +32,43 @@ export default function LandingPage({
   const { umbrellaId } = params;
   const router = useRouter();
   const { userSession } = useSessionStore();
-  const [bannerIdx, setBannerIdx] = useState(0);
+  const [loftIdx, setLoftIdx] = useState(0);
+  const [kuziiniIdx, setKuziiniIdx] = useState(0);
+  const [loftBanners, setLoftBanners] = useState<PromoBanner[]>([]);
+  const [kuziiniBanners, setKuziiniBanners] = useState<PromoBanner[]>([]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["umbrella", umbrellaId],
     queryFn: () => fetchUmbrella(umbrellaId),
   });
 
+  // Fetch banners
   useEffect(() => {
+    fetch("/api/banners?category=loft")
+      .then((r) => r.json())
+      .then((j) => { if (j.success && j.data.length) setLoftBanners(j.data); });
+    fetch("/api/banners?category=kuziini")
+      .then((r) => r.json())
+      .then((j) => { if (j.success && j.data.length) setKuziiniBanners(j.data); });
+  }, []);
+
+  // Auto-rotate LOFT banners
+  useEffect(() => {
+    if (loftBanners.length <= 1) return;
     const t = setInterval(() => {
-      setBannerIdx((i) => (i + 1) % PROMO_BANNERS.length);
+      setLoftIdx((i) => (i + 1) % loftBanners.length);
     }, 4000);
     return () => clearInterval(t);
-  }, []);
+  }, [loftBanners.length]);
+
+  // Auto-rotate Kuziini banners
+  useEffect(() => {
+    if (kuziiniBanners.length <= 1) return;
+    const t = setInterval(() => {
+      setKuziiniIdx((i) => (i + 1) % kuziiniBanners.length);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [kuziiniBanners.length]);
 
   // Redirect to /scan if not authenticated via QR
   useEffect(() => {
@@ -82,7 +105,8 @@ export default function LandingPage({
   }
 
   const umbrella: Umbrella = data.umbrella;
-  const banner = PROMO_BANNERS[bannerIdx];
+  const loftBanner = loftBanners[loftIdx] || null;
+  const kuziiniBanner = kuziiniBanners[kuziiniIdx] || null;
 
   return (
     <>
@@ -105,27 +129,47 @@ export default function LandingPage({
             )}
           </div>
 
-          {/* Ad / Promo space */}
-          <div className="w-full max-w-sm bg-white/[0.03] border border-white/[0.06] p-4 animate-fade-in transition-all duration-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-white tracking-wide">{banner.title}</p>
-                <p className="text-white/40 text-xs mt-0.5">{banner.subtitle}</p>
-              </div>
-              <span className="text-2xl">{banner.emoji}</span>
+          {/* LOFT Banners */}
+          {loftBanner && (
+            <div className="w-full max-w-sm mb-3">
+              <p className="text-[10px] font-bold text-white/20 tracking-[0.2em] uppercase mb-2">LOFT</p>
+              <BannerSlide banner={loftBanner} />
+              {loftBanners.length > 1 && (
+                <div className="flex gap-1 mt-2">
+                  {loftBanners.map((_: PromoBanner, i: number) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "h-0.5 rounded-full transition-all duration-300",
+                        i === loftIdx ? "w-6 bg-[#C9AB81]" : "w-2 bg-white/15"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex gap-1 mt-3">
-              {PROMO_BANNERS.map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "h-0.5 rounded-full transition-all duration-300",
-                    i === bannerIdx ? "w-6 bg-[#C9AB81]" : "w-2 bg-white/15"
-                  )}
-                />
-              ))}
+          )}
+
+          {/* Kuziini Banners */}
+          {kuziiniBanner && (
+            <div className="w-full max-w-sm">
+              <p className="text-[10px] font-bold text-white/20 tracking-[0.2em] uppercase mb-2">Kuziini</p>
+              <BannerSlide banner={kuziiniBanner} />
+              {kuziiniBanners.length > 1 && (
+                <div className="flex gap-1 mt-2">
+                  {kuziiniBanners.map((_: PromoBanner, i: number) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "h-0.5 rounded-full transition-all duration-300",
+                        i === kuziiniIdx ? "w-6 bg-[#C9AB81]" : "w-2 bg-white/15"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
 
         {/* ═══ BOTTOM: Action buttons grouped at bottom ═══ */}
@@ -176,6 +220,26 @@ export default function LandingPage({
         </div>
       </div>
     </>
+  );
+}
+
+function BannerSlide({ banner }: { banner: PromoBanner }) {
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.06] p-4 animate-fade-in transition-all duration-500">
+      <div className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white tracking-wide">{banner.title}</p>
+          {banner.subtitle && (
+            <p className="text-white/40 text-xs mt-0.5">{banner.subtitle}</p>
+          )}
+        </div>
+        {banner.image ? (
+          <img src={banner.image} alt="" className="w-10 h-10 object-cover rounded shrink-0 ml-3" />
+        ) : banner.emoji ? (
+          <span className="text-2xl shrink-0 ml-3">{banner.emoji}</span>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

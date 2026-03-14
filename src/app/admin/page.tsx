@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Users, ShoppingBag, Receipt, DollarSign, RefreshCw, Umbrella } from "lucide-react";
+import { Lock, Users, ShoppingBag, Receipt, DollarSign, RefreshCw, Umbrella, ImageIcon } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import type { PromoBanner } from "@/types";
+import BannerManager from "@/components/BannerManager";
 
 interface Stats {
   totalLogins: number;
@@ -53,7 +55,7 @@ interface AdminData {
   billRequests: BillEntry[];
 }
 
-type Tab = "overview" | "logins" | "orders" | "bills" | "umbrellas";
+type Tab = "overview" | "logins" | "orders" | "bills" | "umbrellas" | "banners";
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
@@ -62,6 +64,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AdminData | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  const [kuziiniBanners, setKuziiniBanners] = useState<PromoBanner[]>([]);
 
   async function fetchData(pw?: string) {
     setLoading(true);
@@ -76,6 +79,14 @@ export default function AdminPage() {
       if (!json.success) throw new Error(json.error);
       setData(json.data);
       setAuthenticated(true);
+      // Fetch Kuziini banners
+      const bRes = await fetch("/api/banners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw || password, category: "kuziini", action: "list" }),
+      });
+      const bJson = await bRes.json();
+      if (bJson.success) setKuziiniBanners(bJson.data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Eroare.");
       if (!authenticated) setAuthenticated(false);
@@ -155,6 +166,7 @@ export default function AdminPage() {
     { key: "orders", label: "Comenzi", icon: <ShoppingBag className="w-4 h-4" /> },
     { key: "bills", label: "Note", icon: <Receipt className="w-4 h-4" /> },
     { key: "umbrellas", label: "Umbrele", icon: <Umbrella className="w-4 h-4" /> },
+    { key: "banners", label: "Bannere", icon: <ImageIcon className="w-4 h-4" /> },
   ];
 
   return (
@@ -310,6 +322,21 @@ export default function AdminPage() {
                 </div>
               ))
             )}
+          </>
+        )}
+
+        {/* Banners Kuziini */}
+        {tab === "banners" && (
+          <>
+            <p className="text-white/30 text-xs mb-1">
+              {kuziiniBanners.length} bannere Kuziini · Apar pe pagina clienților
+            </p>
+            <BannerManager
+              category="kuziini"
+              password={password}
+              banners={kuziiniBanners}
+              onUpdate={setKuziiniBanners}
+            />
           </>
         )}
 
