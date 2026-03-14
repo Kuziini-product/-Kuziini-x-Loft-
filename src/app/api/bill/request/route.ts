@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MOCK_BILL } from "@/lib/mock-data";
 import { sleep } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
-  await sleep(300);
+  await sleep(500);
 
-  const { umbrellaId, sessionId, phone } = await req.json();
+  const { umbrellaId, sessionId, paymentMethod, amount } = await req.json();
 
-  if (!umbrellaId || !sessionId) {
+  if (!umbrellaId || !sessionId || !paymentMethod) {
     return NextResponse.json(
       { success: false, error: "Date incomplete." },
       { status: 400 }
     );
   }
 
-  const bill = { ...MOCK_BILL, status: "requested" as const };
-
-  return NextResponse.json({ success: true, data: { bill } });
+  // Notify POS — waiter will come with the bill
+  return NextResponse.json({
+    success: true,
+    data: {
+      requestId: `REQ-${Date.now()}`,
+      umbrellaId,
+      paymentMethod,
+      amount,
+      status: "pending",
+      message: `Nota a fost trimisă la POS. Ospătarul vine la umbrela ${umbrellaId}.`,
+    },
+  });
 }

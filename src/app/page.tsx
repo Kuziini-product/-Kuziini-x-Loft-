@@ -16,13 +16,6 @@ const GALLERY_IMAGES = [
   "https://kuziini.ro/wp-content/uploads/2023/04/moderno-2847464326.jpg",
 ];
 
-const ZONES = [
-  { id: "A-01", name: "Zona Lounge", desc: "Fotolii premium", emoji: "🛋️" },
-  { id: "A-02", name: "Zona Lounge", desc: "Atmosfera relaxata", emoji: "🛋️" },
-  { id: "B-07", name: "Zona Beach", desc: "Plaja & mare", emoji: "🏖️" },
-  { id: "VIP-03", name: "VIP Premium", desc: "Servicii exclusive", emoji: "👑" },
-];
-
 export default function HomePage() {
   return (
     <div className="min-h-dvh bg-[#0A0A0A] text-white overflow-x-hidden">
@@ -166,68 +159,6 @@ export default function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="py-16 px-5 border-t border-white/5">
-        <div className="text-center mb-10">
-          <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.4em] uppercase mb-3">
-            Cum funcționează
-          </p>
-          <h2 className="text-2xl font-bold tracking-wide">
-            Comandă de la <span className="text-[#C9AB81]">șezlong</span>
-          </h2>
-          <div className="w-12 h-px bg-[#C9AB81]/40 mx-auto mt-3" />
-        </div>
-
-        <div className="space-y-4 max-w-md mx-auto">
-          {[
-            { step: "01", title: "Scanează QR", desc: "Codul QR de pe umbrela ta", icon: "📱" },
-            { step: "02", title: "Alege din meniu", desc: "Meniul LOFT complet cu prețuri live", icon: "🍹" },
-            { step: "03", title: "Primești comanda", desc: "Livrare la șezlong, plată cash/card/room charge", icon: "🛎️" },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="flex items-center gap-4 bg-white/[0.03] border border-white/[0.06] p-4"
-            >
-              <span className="text-2xl shrink-0">{item.icon}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[#C9AB81] text-[10px] font-bold tracking-wider">{item.step}</span>
-                  <h3 className="text-sm font-bold tracking-wide">{item.title}</h3>
-                </div>
-                <p className="text-white/30 text-xs">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Demo Zones */}
-      <section className="py-16 px-5 border-t border-white/5">
-        <div className="text-center mb-8">
-          <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.4em] uppercase mb-3">
-            Demo
-          </p>
-          <h2 className="text-2xl font-bold tracking-wide">
-            Încearcă acum
-          </h2>
-          <div className="w-12 h-px bg-[#C9AB81]/40 mx-auto mt-3" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
-          {ZONES.map((zone) => (
-            <Link key={zone.id} href={`/u/${zone.id}`}>
-              <div className="bg-white/[0.03] border border-white/[0.06] p-4 active:bg-white/[0.06] transition-all group text-center">
-                <span className="text-xl mb-2 block">{zone.emoji}</span>
-                <p className="font-bold text-sm tracking-wide">{zone.id}</p>
-                <p className="text-[#C9AB81] text-[10px] tracking-wider uppercase">{zone.name}</p>
-                <p className="text-white/20 text-[10px] mt-0.5">{zone.desc}</p>
-                <ChevronRight className="w-3.5 h-3.5 text-[#C9AB81]/50 mt-2 mx-auto group-active:translate-x-1 transition-transform" />
-              </div>
-            </Link>
           ))}
         </div>
       </section>
