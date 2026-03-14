@@ -61,8 +61,8 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
         <PageHeader
           title="Coș"
           back={
-            <Link href={`/u/${umbrellaId}/menu`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-              <ArrowLeft className="w-4 h-4 text-gray-600" />
+            <Link href={`/u/${umbrellaId}/menu`} className="w-9 h-9 flex items-center justify-center bg-white/10">
+              <ArrowLeft className="w-4 h-4 text-white/70" />
             </Link>
           }
         />
@@ -93,12 +93,12 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
           title="Coș"
           subtitle={`${items.length} ${items.length === 1 ? "produs" : "produse"}`}
           back={
-            <Link href={`/u/${umbrellaId}/menu`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-              <ArrowLeft className="w-4 h-4 text-gray-600" />
+            <Link href={`/u/${umbrellaId}/menu`} className="w-9 h-9 flex items-center justify-center bg-white/10">
+              <ArrowLeft className="w-4 h-4 text-white/70" />
             </Link>
           }
           right={
-            <button onClick={clearCart} className="text-xs text-coral-500 font-semibold font-body">
+            <button onClick={clearCart} className="text-[10px] text-red-400 font-bold tracking-[0.15em] uppercase">
               Golește
             </button>
           }
@@ -116,8 +116,8 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
           ))}
 
           {/* Notes */}
-          <div className="bg-white rounded-3xl p-4 shadow-card">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide font-body block mb-2">
+          <div className="bg-white/[0.03] border border-white/[0.06] p-4">
+            <label className="text-[10px] font-bold text-[#C9AB81] uppercase tracking-[0.2em] block mb-2">
               Observații generale
             </label>
             <textarea
@@ -125,47 +125,47 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
               placeholder="Alergii, preferințe sau alte mențiuni..."
               value={globalNotes}
               onChange={(e) => setGlobalNotes(e.target.value)}
-              className="w-full bg-gray-50 rounded-xl px-3 py-2.5 text-sm font-body text-gray-700 placeholder:text-gray-300 outline-none focus:ring-2 focus:ring-ocean-200 resize-none"
+              className="w-full bg-white/[0.06] px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:ring-1 focus:ring-[#C9AB81]/30 resize-none"
             />
           </div>
 
           {/* Guest option */}
           {userSession?.role === "guest" && (
-            <div className="bg-sand-50 border border-sand-200 rounded-3xl p-4">
-              <p className="text-sm font-semibold text-sand-800 font-body mb-3">
+            <div className="bg-white/[0.03] border border-white/[0.06] p-4">
+              <p className="text-sm font-bold text-white mb-3 tracking-wide">
                 🤝 Cum vrei să trimiți comanda?
               </p>
               <div className="space-y-2">
                 <button
                   onClick={() => setOwnerApproval(false)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${
+                  className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
                     !ownerApproval
-                      ? "border-ocean-400 bg-ocean-50"
-                      : "border-gray-100 bg-white"
+                      ? "border-[#C9AB81] bg-[#C9AB81]/10"
+                      : "border-white/[0.06] bg-white/[0.03]"
                   }`}
                 >
                   <span className="text-lg">🧾</span>
                   <div>
-                    <p className="text-sm font-semibold font-body text-gray-900">
+                    <p className="text-sm font-bold text-white">
                       Notă separată
                     </p>
-                    <p className="text-xs text-gray-500">Plătești independent</p>
+                    <p className="text-xs text-white/40">Plătești independent</p>
                   </div>
                 </button>
                 <button
                   onClick={() => setOwnerApproval(true)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${
+                  className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
                     ownerApproval
-                      ? "border-ocean-400 bg-ocean-50"
-                      : "border-gray-100 bg-white"
+                      ? "border-[#C9AB81] bg-[#C9AB81]/10"
+                      : "border-white/[0.06] bg-white/[0.03]"
                   }`}
                 >
                   <span className="text-lg">👑</span>
                   <div>
-                    <p className="text-sm font-semibold font-body text-gray-900">
+                    <p className="text-sm font-bold text-white">
                       Atașează la nota owner-ului
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-white/40">
                       Owner-ul trebuie să aprobe
                     </p>
                   </div>
@@ -175,38 +175,38 @@ export default function CartPage({ params }: { params: { umbrellaId: string } })
           )}
 
           {/* Summary */}
-          <div className="bg-white rounded-3xl p-4 shadow-card">
+          <div className="bg-white/[0.03] border border-white/[0.06] p-4">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-500 font-body">
+              <div className="flex justify-between text-sm text-white/40">
                 <span>Subtotal</span>
                 <span>{formatPrice(totalAmount)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-500 font-body">
+              <div className="flex justify-between text-sm text-white/40">
                 <span>Livrare la șezlong</span>
-                <span className="text-emerald-600 font-semibold">Gratuit</span>
+                <span className="text-emerald-400 font-bold">Gratuit</span>
               </div>
               <Divider className="my-2" />
-              <div className="flex justify-between font-display text-xl font-bold text-gray-900">
+              <div className="flex justify-between text-xl font-bold text-white">
                 <span>Total</span>
-                <span className="text-ocean-700">{formatPrice(totalAmount)}</span>
+                <span className="text-[#C9AB81]">{formatPrice(totalAmount)}</span>
               </div>
             </div>
           </div>
 
           {/* Umbrella */}
-          <div className="flex items-center justify-between bg-ocean-50 rounded-2xl px-4 py-3">
-            <span className="text-sm text-ocean-700 font-body font-semibold">
+          <div className="flex items-center justify-between bg-[#C9AB81]/10 border border-[#C9AB81]/20 px-4 py-3">
+            <span className="text-sm text-[#C9AB81] font-bold tracking-wide">
               ⛱️ Umbrela {umbrellaId}
             </span>
             {userSession && (
-              <span className="text-xs text-ocean-500 font-body">
+              <span className="text-xs text-white/40">
                 {userSession.phone}
               </span>
             )}
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 bg-coral-50 rounded-2xl px-4 py-3 text-coral-700 text-sm font-body">
+            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-3 text-red-400 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
             </div>
@@ -239,15 +239,15 @@ function CartItemRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="bg-white rounded-3xl p-4 shadow-card flex items-center gap-3">
+    <div className="bg-white/[0.03] border border-white/[0.06] p-4 flex items-center gap-3">
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900 font-body text-sm leading-tight">
+        <p className="font-bold text-white text-sm tracking-wide uppercase">
           {item.menuItem.name}
         </p>
         {item.notes && (
-          <p className="text-xs text-gray-400 font-body mt-0.5">{item.notes}</p>
+          <p className="text-xs text-white/30 mt-0.5">{item.notes}</p>
         )}
-        <p className="text-ocean-600 font-bold font-body text-sm mt-1">
+        <p className="text-[#C9AB81] font-bold text-sm mt-1">
           {formatPrice(item.menuItem.price * item.quantity)}
         </p>
       </div>
@@ -255,20 +255,20 @@ function CartItemRow({
       <div className="flex items-center gap-2">
         <button
           onClick={() => onUpdateQty(item.quantity - 1)}
-          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
+          className="w-8 h-8 flex items-center justify-center bg-white/10 text-white/60"
         >
           {item.quantity === 1 ? (
-            <Trash2 className="w-3.5 h-3.5 text-coral-500" />
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
           ) : (
             <Minus className="w-3.5 h-3.5" />
           )}
         </button>
-        <span className="text-base font-bold text-gray-900 w-5 text-center font-body">
+        <span className="text-base font-bold text-white w-5 text-center">
           {item.quantity}
         </span>
         <button
           onClick={() => onUpdateQty(item.quantity + 1)}
-          className="w-8 h-8 rounded-full bg-ocean-600 flex items-center justify-center text-white"
+          className="w-8 h-8 flex items-center justify-center bg-[#C9AB81] text-[#0A0A0A]"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>

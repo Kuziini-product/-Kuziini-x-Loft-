@@ -77,20 +77,20 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
 
   if (done) {
     return (
-      <div className="min-h-dvh bg-beach-gradient flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-6">
-          <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+      <div className="min-h-dvh bg-[#0A0A0A] flex flex-col items-center justify-center px-6 text-center">
+        <div className="w-20 h-20 flex items-center justify-center mb-6 bg-emerald-500/20 border border-emerald-500/30">
+          <CheckCircle2 className="w-10 h-10 text-emerald-400" />
         </div>
-        <h2 className="font-display text-3xl font-bold text-gray-900 mb-3">
+        <h2 className="text-3xl font-bold text-white mb-3 tracking-wide">
           Notă închisă!
         </h2>
-        <p className="text-gray-500 text-sm font-body mb-2">
+        <p className="text-white/40 text-sm mb-2">
           {selectedMethod === "room-charge"
             ? `Suma de ${formatPrice(total)} a fost adăugată la camera ta.`
             : `Plata de ${formatPrice(total)} confirmată. Mulțumim!`}
         </p>
-        <p className="text-gray-400 text-sm font-body mb-8">
-          A fost o plăcere să te servim 🌊
+        <p className="text-white/30 text-sm mb-8">
+          A fost o plăcere să te servim
         </p>
         <Link href={`/u/${umbrellaId}`}>
           <Button variant="secondary">Înapoi la umbrelă</Button>
@@ -102,7 +102,7 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
   if (!userSession) {
     return (
       <div>
-        <PageHeader title="Solicită nota" back={<Link href={`/u/${umbrellaId}`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-gray-600" /></Link>} />
+        <PageHeader title="Solicită nota" back={<Link href={`/u/${umbrellaId}`} className="w-9 h-9 flex items-center justify-center bg-white/10"><ArrowLeft className="w-4 h-4 text-white/70" /></Link>} />
         <EmptyState icon="🔐" title="Identificare necesară" description="Identifică-te pentru a solicita nota." />
       </div>
     );
@@ -114,8 +114,8 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
         title="Solicită nota"
         subtitle={`Umbrela ${umbrellaId}`}
         back={
-          <Link href={`/u/${umbrellaId}`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <Link href={`/u/${umbrellaId}`} className="w-9 h-9 flex items-center justify-center bg-white/10">
+            <ArrowLeft className="w-4 h-4 text-white/70" />
           </Link>
         }
       />
@@ -123,14 +123,14 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
       <div className="px-4 py-4 space-y-4">
         {/* Orders summary */}
         {myOrders.length > 0 ? (
-          <div className="bg-white rounded-3xl shadow-card p-4">
-            <h3 className="font-display text-base font-bold text-gray-900 mb-3">
+          <div className="bg-white/[0.03] border border-white/[0.06] p-4">
+            <h3 className="text-[#C9AB81] text-xs font-bold tracking-[0.2em] uppercase mb-3">
               Sumar comenzi
             </h3>
             <div className="space-y-2">
               {myOrders.map((o) =>
                 o.items.map((item, i) => (
-                  <div key={`${o.id}-${i}`} className="flex justify-between text-sm font-body text-gray-700">
+                  <div key={`${o.id}-${i}`} className="flex justify-between text-sm text-white/60">
                     <span>{item.quantity}× {item.name}</span>
                     <span>{formatPrice(item.price * item.quantity)}</span>
                   </div>
@@ -138,14 +138,14 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
               )}
             </div>
             <Divider className="my-3" />
-            <div className="flex justify-between font-display text-xl font-bold text-gray-900">
+            <div className="flex justify-between text-xl font-bold text-white">
               <span>Total</span>
-              <span className="text-ocean-700">{formatPrice(total)}</span>
+              <span className="text-[#C9AB81]">{formatPrice(total)}</span>
             </div>
           </div>
         ) : (
-          <div className="bg-sand-50 rounded-3xl p-4 text-center">
-            <p className="text-sand-700 text-sm font-body">
+          <div className="bg-white/[0.03] border border-white/[0.06] p-4 text-center">
+            <p className="text-white/40 text-sm">
               Nu ai comenzi active pe această sesiune.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
 
         {/* Payment methods */}
         <div>
-          <h3 className="font-display text-lg font-bold text-gray-900 mb-3">
+          <h3 className="text-[#C9AB81] text-xs font-bold tracking-[0.2em] uppercase mb-3">
             Metodă de plată
           </h3>
 
@@ -209,25 +209,25 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
 
         {/* Credit info */}
         {payOpts?.creditStatus?.eligible && (
-          <div className="bg-ocean-50 rounded-2xl p-4 space-y-2">
-            <p className="text-xs font-semibold text-ocean-700 uppercase tracking-wide font-body">
+          <div className="bg-[#C9AB81]/10 border border-[#C9AB81]/20 p-4 space-y-2">
+            <p className="text-[10px] font-bold text-[#C9AB81] uppercase tracking-[0.2em]">
               Credit disponibil
             </p>
-            <div className="flex justify-between text-sm font-body">
-              <span className="text-gray-600">Limită totală</span>
-              <span className="text-gray-800 font-semibold">{formatPrice(payOpts.creditStatus.limitTotal)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-white/40">Limită totală</span>
+              <span className="text-white font-bold">{formatPrice(payOpts.creditStatus.limitTotal)}</span>
             </div>
-            <div className="flex justify-between text-sm font-body">
-              <span className="text-gray-600">Deja consumat</span>
-              <span className="text-gray-800">{formatPrice(payOpts.creditStatus.limitUsed)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-white/40">Deja consumat</span>
+              <span className="text-white/60">{formatPrice(payOpts.creditStatus.limitUsed)}</span>
             </div>
-            <div className="flex justify-between text-sm font-body">
-              <span className="text-gray-600">Disponibil rămas</span>
-              <span className="text-emerald-700 font-bold">{formatPrice(payOpts.creditStatus.limitAvailable)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-white/40">Disponibil rămas</span>
+              <span className="text-emerald-400 font-bold">{formatPrice(payOpts.creditStatus.limitAvailable)}</span>
             </div>
-            <div className="w-full bg-ocean-100 rounded-full h-2 mt-1">
+            <div className="w-full bg-white/10 h-1.5 mt-1">
               <div
-                className="bg-ocean-500 h-2 rounded-full transition-all"
+                className="bg-[#C9AB81] h-1.5 transition-all"
                 style={{ width: `${(payOpts.creditStatus.limitUsed / payOpts.creditStatus.limitTotal) * 100}%` }}
               />
             </div>
@@ -235,7 +235,7 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
         )}
 
         {error && (
-          <div className="flex items-center gap-2 bg-coral-50 rounded-2xl px-4 py-3 text-coral-700 text-sm font-body">
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-3 text-red-400 text-sm">
             <AlertCircle className="w-4 h-4 shrink-0" />
             {error}
           </div>
@@ -278,26 +278,26 @@ function PaymentOption({
         disabled={isDisabled}
         onClick={onSelect}
         className={cn(
-          "w-full flex items-center gap-4 p-4 rounded-3xl border-2 transition-all text-left",
-          selected ? "border-ocean-500 bg-ocean-50" : "border-gray-100 bg-white",
+          "w-full flex items-center gap-4 p-4 border transition-all text-left",
+          selected ? "border-[#C9AB81] bg-[#C9AB81]/10" : "border-white/[0.06] bg-white/[0.03]",
           isDisabled && "opacity-50 cursor-not-allowed"
         )}
       >
         <div className={cn(
-          "w-11 h-11 rounded-2xl flex items-center justify-center",
-          selected ? "bg-ocean-600 text-white" : "bg-gray-100 text-gray-500"
+          "w-11 h-11 flex items-center justify-center",
+          selected ? "bg-[#C9AB81] text-[#0A0A0A]" : "bg-white/10 text-white/50"
         )}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 font-body text-sm">{label}</p>
-          <p className="text-xs text-gray-400 font-body truncate">{description}</p>
+          <p className="font-bold text-white text-sm tracking-wide">{label}</p>
+          <p className="text-xs text-white/30 truncate">{description}</p>
         </div>
-        {selected && <CheckCircle2 className="w-5 h-5 text-ocean-600 shrink-0" />}
-        {!selected && !isDisabled && <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />}
+        {selected && <CheckCircle2 className="w-5 h-5 text-[#C9AB81] shrink-0" />}
+        {!selected && !isDisabled && <ChevronRight className="w-4 h-4 text-white/20 shrink-0" />}
       </button>
       {isDisabled && disabledReason && (
-        <p className="text-xs text-coral-500 font-body mt-1 px-2">{disabledReason}</p>
+        <p className="text-xs text-red-400 mt-1 px-2">{disabledReason}</p>
       )}
     </div>
   );

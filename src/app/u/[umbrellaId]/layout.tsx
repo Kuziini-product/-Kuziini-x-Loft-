@@ -8,7 +8,7 @@ export default function UmbrellaLayout({
   params: { umbrellaId: string };
 }) {
   return (
-    <div className="min-h-dvh bg-cream">
+    <div className="min-h-dvh bg-[#0A0A0A]">
       <main className="pb-24">{children}</main>
       <BottomNav umbrellaId={params.umbrellaId} />
     </div>

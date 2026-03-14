@@ -25,23 +25,23 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center gap-2 font-body font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none select-none";
+    "inline-flex items-center justify-center gap-2 font-bold tracking-[0.1em] uppercase transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none select-none";
 
   const variants = {
     primary:
-      "bg-ocean-600 text-white shadow-md hover:bg-ocean-700 active:bg-ocean-800",
+      "bg-[#C9AB81] text-[#0A0A0A] active:opacity-80",
     secondary:
-      "bg-sand-100 text-sand-800 hover:bg-sand-200 active:bg-sand-300",
-    ghost: "bg-transparent text-ocean-600 hover:bg-ocean-50",
-    danger: "bg-coral-500 text-white hover:bg-coral-600",
+      "bg-white/[0.06] text-white border border-white/[0.1] active:bg-white/[0.1]",
+    ghost: "bg-transparent text-[#C9AB81] active:bg-white/[0.06]",
+    danger: "bg-red-600/80 text-white active:bg-red-700",
     outline:
-      "border-2 border-ocean-200 text-ocean-700 hover:border-ocean-400 bg-white",
+      "border border-[#C9AB81]/40 text-[#C9AB81] active:bg-[#C9AB81]/10",
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3.5 text-base",
-    lg: "px-8 py-4 text-lg",
+    sm: "px-4 py-2 text-xs",
+    md: "px-6 py-3.5 text-sm",
+    lg: "px-8 py-4 text-sm",
   };
 
   return (
@@ -72,18 +72,18 @@ interface BadgeProps {
 
 export function Badge({ children, className, variant = "ocean" }: BadgeProps) {
   const variants = {
-    ocean: "bg-ocean-100 text-ocean-700",
-    coral: "bg-coral-100 text-coral-700",
-    sand: "bg-sand-100 text-sand-700",
-    green: "bg-emerald-100 text-emerald-700",
-    gray: "bg-gray-100 text-gray-600",
-    purple: "bg-purple-100 text-purple-700",
+    ocean: "bg-[#C9AB81]/20 text-[#C9AB81]",
+    coral: "bg-red-500/20 text-red-400",
+    sand: "bg-amber-500/20 text-amber-400",
+    green: "bg-emerald-500/20 text-emerald-400",
+    gray: "bg-white/10 text-white/50",
+    purple: "bg-purple-500/20 text-purple-400",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold font-body",
+        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider uppercase",
         variants[variant],
         className
       )}
@@ -97,7 +97,7 @@ export function Badge({ children, className, variant = "ocean" }: BadgeProps) {
 
 export function Spinner({ className }: { className?: string }) {
   return (
-    <Loader2 className={cn("w-5 h-5 animate-spin text-ocean-500", className)} />
+    <Loader2 className={cn("w-5 h-5 animate-spin text-[#C9AB81]", className)} />
   );
 }
 
@@ -116,8 +116,8 @@ export function Card({
     <div
       onClick={onClick}
       className={cn(
-        "bg-white rounded-3xl shadow-card p-4",
-        onClick && "cursor-pointer hover:shadow-card-hover transition-shadow",
+        "bg-white/[0.03] border border-white/[0.06] p-4",
+        onClick && "cursor-pointer active:bg-white/[0.06] transition-all",
         className
       )}
     >
@@ -129,7 +129,7 @@ export function Card({
 // ─── Divider ──────────────────────────────────────────────────────────────────
 
 export function Divider({ className }: { className?: string }) {
-  return <div className={cn("h-px bg-gray-100", className)} />;
+  return <div className={cn("h-px bg-white/[0.08]", className)} />;
 }
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
@@ -148,9 +148,9 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       <span className="text-5xl mb-4">{icon}</span>
-      <h3 className="font-display text-xl text-gray-800 mb-2">{title}</h3>
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
       {description && (
-        <p className="text-gray-500 text-sm leading-relaxed mb-6">
+        <p className="text-white/40 text-sm leading-relaxed mb-6">
           {description}
         </p>
       )}
@@ -171,7 +171,7 @@ export function SectionTitle({
   return (
     <h2
       className={cn(
-        "font-display text-2xl text-gray-900 leading-tight",
+        "text-2xl font-bold text-white leading-tight tracking-wide",
         className
       )}
     >
@@ -194,16 +194,18 @@ export function PageHeader({
   right?: ReactNode;
 }) {
   return (
-    <div className="sticky top-0 z-30 bg-cream/90 backdrop-blur-md border-b border-gray-100 px-4 py-3">
+    <div className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/[0.06] px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {back}
           <div>
-            <h1 className="font-display text-lg font-semibold text-gray-900 leading-tight">
+            <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-[#C9AB81]">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-xs text-gray-500 font-body">{subtitle}</p>
+              <p className="text-[10px] text-white/40 tracking-widest uppercase">
+                {subtitle}
+              </p>
             )}
           </div>
         </div>

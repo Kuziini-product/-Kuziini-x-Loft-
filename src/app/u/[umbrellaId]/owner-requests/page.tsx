@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, XCircle, Users, Crown } from "lucide-react";
 import { PageHeader, Button, EmptyState, Badge } from "@/components/ui";
 import { useSessionStore } from "@/store";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { GuestJoinRequest } from "@/types";
 
 export default function OwnerRequestsPage({ params }: { params: { umbrellaId: string } }) {
@@ -40,7 +40,7 @@ export default function OwnerRequestsPage({ params }: { params: { umbrellaId: st
   if (!userSession) {
     return (
       <div>
-        <PageHeader title="Cereri Guest" back={<Link href={`/u/${umbrellaId}`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-gray-600" /></Link>} />
+        <PageHeader title="Cereri Guest" back={<Link href={`/u/${umbrellaId}`} className="w-9 h-9 flex items-center justify-center bg-white/10"><ArrowLeft className="w-4 h-4 text-white/70" /></Link>} />
         <EmptyState icon="🔐" title="Identificare necesară" />
       </div>
     );
@@ -49,7 +49,7 @@ export default function OwnerRequestsPage({ params }: { params: { umbrellaId: st
   if (!isOwner) {
     return (
       <div>
-        <PageHeader title="Cereri Guest" back={<Link href={`/u/${umbrellaId}`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-gray-600" /></Link>} />
+        <PageHeader title="Cereri Guest" back={<Link href={`/u/${umbrellaId}`} className="w-9 h-9 flex items-center justify-center bg-white/10"><ArrowLeft className="w-4 h-4 text-white/70" /></Link>} />
         <EmptyState icon="👑" title="Doar owner-ul poate vedea cererile" description="Această secțiune este vizibilă doar pentru owner-ul umbrelei." />
       </div>
     );
@@ -68,8 +68,8 @@ export default function OwnerRequestsPage({ params }: { params: { umbrellaId: st
         title="Cereri Guest"
         subtitle={`Umbrela ${umbrellaId}`}
         back={
-          <Link href={`/u/${umbrellaId}`} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <Link href={`/u/${umbrellaId}`} className="w-9 h-9 flex items-center justify-center bg-white/10">
+            <ArrowLeft className="w-4 h-4 text-white/70" />
           </Link>
         }
         right={
@@ -83,21 +83,21 @@ export default function OwnerRequestsPage({ params }: { params: { umbrellaId: st
         {/* Pending */}
         {pending.length > 0 && (
           <div>
-            <h3 className="font-display text-lg font-bold text-gray-900 mb-3">
+            <h3 className="text-[#C9AB81] text-xs font-bold tracking-[0.2em] uppercase mb-3">
               În așteptare ({pending.length})
             </h3>
             <div className="space-y-3">
               {pending.map((req) => (
-                <div key={req.id} className="bg-white rounded-3xl shadow-card p-4 ring-1 ring-ocean-200">
+                <div key={req.id} className="bg-white/[0.03] border border-[#C9AB81]/30 p-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-sand-100 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-sand-600" />
+                    <div className="w-10 h-10 flex items-center justify-center bg-white/10">
+                      <Users className="w-5 h-5 text-white/50" />
                     </div>
                     <div>
-                      <p className="font-semibold font-body text-gray-900 text-sm">
+                      <p className="font-bold text-white text-sm">
                         {req.guestPhone}
                       </p>
-                      <p className="text-xs text-gray-400 font-body">
+                      <p className="text-xs text-white/30">
                         {formatDate(req.createdAt)}
                       </p>
                     </div>
@@ -136,18 +136,18 @@ export default function OwnerRequestsPage({ params }: { params: { umbrellaId: st
         {/* Resolved */}
         {resolved.length > 0 && (
           <div>
-            <h3 className="font-display text-base font-bold text-gray-700 mb-3">
+            <h3 className="text-white/50 text-xs font-bold tracking-[0.2em] uppercase mb-3">
               Rezolvate
             </h3>
             <div className="space-y-2">
               {resolved.map((req) => (
-                <div key={req.id} className="bg-white rounded-2xl p-3 shadow-sm flex items-center justify-between">
+                <div key={req.id} className="bg-white/[0.03] border border-white/[0.06] p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-body text-gray-600">{req.guestPhone}</span>
+                    <Users className="w-4 h-4 text-white/30" />
+                    <span className="text-sm text-white/50">{req.guestPhone}</span>
                   </div>
                   <Badge variant={req.status === "approved" ? "green" : "coral" as any}>
-                    {req.status === "approved" ? "✓ Aprobat" : "✗ Refuzat"}
+                    {req.status === "approved" ? "Aprobat" : "Refuzat"}
                   </Badge>
                 </div>
               ))}
