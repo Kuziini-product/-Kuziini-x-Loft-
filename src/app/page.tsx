@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="relative z-10 text-center px-5 w-full max-w-lg">
           {/* Logo mare */}
           <Image
-            src="/kuziini-logo.jpg"
+            src="/kuziini-logo.png"
             alt="Kuziini Furniture & More"
             width={160}
             height={160}
@@ -180,7 +180,7 @@ export default function HomePage() {
       <footer className="py-10 px-5 border-t border-white/10">
         <div className="flex items-center gap-3 mb-5">
           <Image
-            src="/kuziini-logo.jpg"
+            src="/kuziini-logo.png"
             alt="Kuziini"
             width={48}
             height={48}

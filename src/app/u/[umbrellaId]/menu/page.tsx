@@ -119,13 +119,21 @@ export default function MenuPage({ params }: { params: { umbrellaId: string } })
         )}
       </div>
 
-      {/* LOFT Logo */}
+      {/* Kuziini × LOFT Logos */}
       <div className="flex flex-col items-center pt-8 pb-6 px-4">
-        <img
-          src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
-          alt="LOFT"
-          className="h-10 object-contain mb-4"
-        />
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <img
+            src="/kuziini-logo.png"
+            alt="Kuziini"
+            className="h-12 object-contain"
+          />
+          <span className="text-[#C9AB81] text-xl font-bold">×</span>
+          <img
+            src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
+            alt="LOFT"
+            className="h-10 object-contain"
+          />
+        </div>
         <p className="text-white/30 text-[10px] tracking-[0.4em] uppercase">
           The best restaurant is a club, and the best club is a restaurant
         </p>
