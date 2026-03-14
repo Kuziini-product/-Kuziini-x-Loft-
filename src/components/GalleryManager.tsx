@@ -1,25 +1,70 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Plus, Trash2, ImageIcon, X, Upload, FolderOpen } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Plus, Trash2, ImageIcon, X, Upload, FolderOpen, GripVertical } from "lucide-react";
 import type { BannerCategory } from "@/types";
-import type { GalleryImage, LibraryPhoto } from "@/lib/mock-data";
+import type { GalleryImage, GalleryAspect, LibraryPhoto } from "@/lib/mock-data";
 
 interface GalleryManagerProps {
   category: BannerCategory;
   password: string;
   slots: number;
+  aspect: GalleryAspect;
   images: GalleryImage[];
   library: LibraryPhoto[];
-  onUpdate: (data: { slots: number; images: GalleryImage[]; library: LibraryPhoto[] }) => void;
+  onUpdate: (data: { slots: number; aspect: GalleryAspect; images: GalleryImage[]; library: LibraryPhoto[] }) => void;
 }
 
 const SLOT_OPTIONS = [1, 2, 3, 4, 6];
+const ASPECT_OPTIONS: { value: GalleryAspect; label: string }[] = [
+  { value: "square", label: "Pătrat" },
+  { value: "portrait", label: "Portret" },
+  { value: "landscape", label: "Peisaj" },
+];
+
+function getAspectClass(aspect: GalleryAspect): string {
+  switch (aspect) {
+    case "portrait": return "aspect-[3/4]";
+    case "landscape": return "aspect-[4/3]";
+    default: return "aspect-square";
+  }
+}
+
+/** Resize image client-side: max 1200px longest side, JPEG quality 0.8 */
+function resizeImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1200;
+      let w = img.width;
+      let h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) {
+          h = Math.round(h * (MAX / w));
+          w = MAX;
+        } else {
+          w = Math.round(w * (MAX / h));
+          h = MAX;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Canvas not supported")); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 export default function GalleryManager({
   category,
   password,
   slots,
+  aspect,
   images,
   library,
   onUpdate,
@@ -28,6 +73,8 @@ export default function GalleryManager({
   const [error, setError] = useState<string | null>(null);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
+  const dragSlot = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
 
   const apiCall = useCallback(
     async (action: string, extra: Record<string, unknown> = {}) => {
@@ -53,22 +100,21 @@ export default function GalleryManager({
     [password, category, onUpdate]
   );
 
-  function uploadForSlot(slotIndex: number) {
+  async function uploadForSlot(slotIndex: number) {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      if (file.size > 800 * 1024) {
-        setError("Imaginea trebuie să fie sub 800KB.");
-        return;
+      try {
+        setLoading(true);
+        const url = await resizeImage(file);
+        await apiCall("setSlotImage", { slotIndex, url });
+      } catch {
+        setError("Eroare la procesarea imaginii.");
+        setLoading(false);
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        apiCall("setSlotImage", { slotIndex, url: reader.result as string });
-      };
-      reader.readAsDataURL(file);
     };
     input.click();
   }
@@ -80,24 +126,74 @@ export default function GalleryManager({
     setShowLibrary(false);
   }
 
-  function uploadToLibrary() {
+  async function uploadToLibrary() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      if (file.size > 800 * 1024) {
-        setError("Imaginea trebuie să fie sub 800KB.");
-        return;
+      try {
+        setLoading(true);
+        const url = await resizeImage(file);
+        await apiCall("addToLibrary", { url });
+      } catch {
+        setError("Eroare la procesarea imaginii.");
+        setLoading(false);
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        apiCall("addToLibrary", { url: reader.result as string });
-      };
-      reader.readAsDataURL(file);
     };
     input.click();
+  }
+
+  // Drag & drop: swap two slots
+  function handleDragStart(slotIndex: number) {
+    dragSlot.current = slotIndex;
+  }
+
+  function handleDragOver(e: React.DragEvent, slotIndex: number) {
+    e.preventDefault();
+    setDragOver(slotIndex);
+  }
+
+  function handleDragLeave() {
+    setDragOver(null);
+  }
+
+  function handleDrop(targetSlot: number) {
+    setDragOver(null);
+    const sourceSlot = dragSlot.current;
+    dragSlot.current = null;
+    if (sourceSlot === null || sourceSlot === targetSlot) return;
+
+    // Build new order: swap source and target
+    const sorted = [...images].sort((a, b) => a.order - b.order);
+    const sourceImg = sorted.find((img) => img.order === sourceSlot);
+    const targetImg = sorted.find((img) => img.order === targetSlot);
+
+    if (!sourceImg && !targetImg) return;
+
+    // Build the new ordered IDs list with swap applied
+    const newImages: { id: string; order: number }[] = [];
+    for (let i = 0; i < slots; i++) {
+      let img;
+      if (i === targetSlot) img = sourceImg;
+      else if (i === sourceSlot) img = targetImg;
+      else img = sorted.find((m) => m.order === i);
+      if (img) newImages.push({ id: img.id, order: i });
+    }
+
+    // Use reorderImages with the swapped order
+    const orderedIds = Array.from({ length: slots }, (_, i) => {
+      const found = newImages.find((m) => m.order === i);
+      return found?.id;
+    }).filter(Boolean) as string[];
+
+    apiCall("reorderImages", { orderedIds });
+  }
+
+  function handleDragEnd() {
+    dragSlot.current = null;
+    setDragOver(null);
   }
 
   function getGridPreview(): string {
@@ -111,6 +207,8 @@ export default function GalleryManager({
     }
   }
 
+  const aspectClass = getAspectClass(aspect);
+
   return (
     <div className="space-y-4">
       {error && (
@@ -119,12 +217,12 @@ export default function GalleryManager({
         </div>
       )}
 
-      {/* Slot selector */}
+      {/* Slot selector + Aspect selector */}
       <div className="bg-white/[0.03] border border-white/[0.06] p-4">
         <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
           Număr ferestre
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-4">
           {SLOT_OPTIONS.map((n) => (
             <button
               key={n}
@@ -140,24 +238,60 @@ export default function GalleryManager({
             </button>
           ))}
         </div>
+
+        <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
+          Aspect imagine
+        </p>
+        <div className="flex gap-2">
+          {ASPECT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => apiCall("setAspect", { aspect: opt.value })}
+              disabled={loading}
+              className={`flex-1 py-2 text-xs font-bold tracking-wider uppercase transition-all ${
+                aspect === opt.value
+                  ? "bg-[#C9AB81] text-[#0A0A0A]"
+                  : "bg-white/[0.06] text-white/40 active:bg-white/[0.1]"
+              } disabled:opacity-50`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Grid - clickable slots */}
+      {/* Grid - draggable clickable slots */}
       <div className="bg-white/[0.03] border border-white/[0.06] p-4">
-        <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
+        <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-1">
           Ferestre ({images.length}/{slots})
         </p>
+        <p className="text-white/20 text-[9px] mb-3">Trage și plasează pentru a schimba ordinea</p>
         <div className={`grid ${getGridPreview()} gap-2`}>
           {Array.from({ length: slots }).map((_, i) => {
             const img = images[i];
+            const isDragTarget = dragOver === i;
             return (
               <div
                 key={i}
-                className="relative aspect-square bg-white/[0.03] border border-white/[0.08] overflow-hidden group"
+                draggable={!!img}
+                onDragStart={() => handleDragStart(i)}
+                onDragOver={(e) => handleDragOver(e, i)}
+                onDragLeave={handleDragLeave}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={handleDragEnd}
+                className={`relative ${aspectClass} bg-white/[0.03] border-2 overflow-hidden group transition-all ${
+                  isDragTarget
+                    ? "border-[#C9AB81] scale-[1.02]"
+                    : "border-white/[0.08]"
+                }`}
               >
                 {img ? (
                   <>
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    {/* Drag handle */}
+                    <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                      <GripVertical className="w-5 h-5 text-white drop-shadow-lg" />
+                    </div>
                     {/* Overlay with actions */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                       <button
@@ -194,7 +328,9 @@ export default function GalleryManager({
                   </>
                 ) : (
                   <div
-                    className="w-full h-full flex flex-col items-center justify-center text-white/30 cursor-pointer active:bg-white/[0.06] transition-colors gap-2"
+                    className={`w-full h-full flex flex-col items-center justify-center text-white/30 cursor-pointer active:bg-white/[0.06] transition-colors gap-2 ${
+                      isDragTarget ? "bg-[#C9AB81]/10" : ""
+                    }`}
                     onClick={() => {
                       setActiveSlot(i);
                       setShowLibrary(true);

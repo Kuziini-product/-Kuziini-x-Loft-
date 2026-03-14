@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Lock, Users, ShoppingBag, Receipt, DollarSign, RefreshCw, Umbrella, ImageIcon, LayoutGrid } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { PromoBanner } from "@/types";
-import type { GalleryImage, LibraryPhoto } from "@/lib/mock-data";
+import type { GalleryImage, GalleryAspect, LibraryPhoto } from "@/lib/mock-data";
 import BannerManager from "@/components/BannerManager";
 import GalleryManager from "@/components/GalleryManager";
+import SectionHelp from "@/components/SectionHelp";
 
 interface Stats {
   totalLogins: number;
@@ -68,6 +69,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("overview");
   const [kuziiniBanners, setKuziiniBanners] = useState<PromoBanner[]>([]);
   const [gallerySlots, setGallerySlots] = useState(3);
+  const [galleryAspect, setGalleryAspect] = useState<GalleryAspect>("square");
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [galleryLibrary, setGalleryLibrary] = useState<LibraryPhoto[]>([]);
 
@@ -101,6 +103,7 @@ export default function AdminPage() {
       const gJson = await gRes.json();
       if (gJson.success) {
         setGallerySlots(gJson.data.slots);
+        if (gJson.data.aspect) setGalleryAspect(gJson.data.aspect);
         setGalleryImages(gJson.data.images);
         if (gJson.data.library) setGalleryLibrary(gJson.data.library);
       }
@@ -228,6 +231,18 @@ export default function AdminPage() {
         {/* Overview */}
         {tab === "overview" && (
           <>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/30 text-xs">Statistici generale</p>
+              <SectionHelp items={[
+                "Aceasta sectiune afiseaza statisticile generale ale platformei in timp real.",
+                "Total logari: numarul total de autentificari ale clientilor prin QR code.",
+                "Utilizatori unici: numarul de numere de telefon distincte care s-au logat.",
+                "Total comenzi si Venit total: toate comenzile plasate si suma totala.",
+                "Note solicitate: cate cereri de nota/plata au fost trimise de clienti.",
+                "Umbrele active: cate umbrele au sesiuni active in acest moment.",
+                "Metodele de plata arata distributia intre cash, card si alte metode.",
+              ]} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <StatCard label="Total logări" value={data.stats.totalLogins} />
               <StatCard label="Utilizatori unici" value={data.stats.uniquePhones} />
@@ -259,7 +274,15 @@ export default function AdminPage() {
         {/* Logins */}
         {tab === "logins" && (
           <>
-            <p className="text-white/30 text-xs">{data.logins.length} înregistrări</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/30 text-xs">{data.logins.length} inregistrari</p>
+              <SectionHelp items={[
+                "Aici vezi toate logarile clientilor prin QR code, in ordine cronologica.",
+                "Fiecare intrare arata: numele clientului, numarul de telefon si umbrela scanata.",
+                "Timestamp-ul din dreapta arata data si ora logarii.",
+                "Foloseste butonul de refresh din header pentru a actualiza datele.",
+              ]} />
+            </div>
             {data.logins.length === 0 ? (
               <EmptyMsg text="Nicio logare înregistrată." />
             ) : (
@@ -284,7 +307,14 @@ export default function AdminPage() {
         {/* Orders */}
         {tab === "orders" && (
           <>
-            <p className="text-white/30 text-xs">{data.orders.length} comenzi</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/30 text-xs">{data.orders.length} comenzi</p>
+              <SectionHelp items={[
+                "Lista tuturor comenzilor plasate de clienti, cu detalii complete.",
+                "Fiecare comanda arata: ID comanda, telefon client, umbrela, produsele comandate si totalul.",
+                "Comenzile sunt afisate in ordine cronologica inversa (cele mai recente primele).",
+              ]} />
+            </div>
             {data.orders.length === 0 ? (
               <EmptyMsg text="Nicio comandă înregistrată." />
             ) : (
@@ -321,7 +351,14 @@ export default function AdminPage() {
         {/* Bills */}
         {tab === "bills" && (
           <>
-            <p className="text-white/30 text-xs">{data.billRequests.length} note solicitate</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/30 text-xs">{data.billRequests.length} note solicitate</p>
+              <SectionHelp items={[
+                "Aici vezi toate cererile de nota de plata trimise de clienti.",
+                "Fiecare cerere arata: umbrela, metoda de plata aleasa si suma totala.",
+                "Cand un client apasa 'Cere nota' din aplicatie, cererea apare aici automat.",
+              ]} />
+            </div>
             {data.billRequests.length === 0 ? (
               <EmptyMsg text="Nicio notă solicitată." />
             ) : (
@@ -346,9 +383,20 @@ export default function AdminPage() {
         {/* Banners Kuziini */}
         {tab === "banners" && (
           <>
-            <p className="text-white/30 text-xs mb-1">
-              {kuziiniBanners.length} bannere Kuziini · Apar pe pagina clienților
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/30 text-xs">
+                {kuziiniBanners.length} bannere Kuziini
+              </p>
+              <SectionHelp items={[
+                "Bannerele apar pe pagina clientului (pagina umbrelelei) si se rotesc automat la fiecare 4 secunde.",
+                "Apasa 'Adauga banner' pentru a crea un banner nou. Titlul este obligatoriu.",
+                "Poti adauga un emoji sau o imagine (max 500KB) pentru a face bannerul mai vizibil.",
+                "Sectiunea 'Link Instagram' iti permite sa adaugi un link Instagram. Cand clientul apasa pe banner, se deschide pagina de Instagram direct.",
+                "Foloseste sagetile sus/jos pentru a schimba ordinea bannerelor.",
+                "Apasa iconita de editare (salvare) pentru a modifica un banner existent.",
+                "Apasa iconita rosie (cos de gunoi) pentru a sterge un banner.",
+              ]} />
+            </div>
             <BannerManager
               category="kuziini"
               password={password}
@@ -361,17 +409,30 @@ export default function AdminPage() {
         {/* Gallery Kuziini */}
         {tab === "gallery" && (
           <>
-            <p className="text-white/30 text-xs mb-4">
-              Pozele apar pe pagina de landing în secțiunea Kuziini
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-white/30 text-xs">
+                Pozele apar pe landing in sectiunea Kuziini
+              </p>
+              <SectionHelp items={[
+                "Alege numarul de ferestre (1, 2, 3, 4 sau 6) pentru a seta cate poze apar pe landing page.",
+                "Alege aspectul imaginii: Patrat, Portret sau Peisaj. Aceasta schimba forma tuturor ferestrelor.",
+                "Apasa pe o fereastra goala pentru a alege o poza din biblioteca sau apasa 'Din PC' pentru a incarca direct.",
+                "Treci mouse-ul peste o poza existenta pentru a vedea optiunile: Inlocuieste, Biblioteca sau Sterge.",
+                "Poti trage si plasa pozele intre ferestre pentru a le schimba ordinea (drag & drop).",
+                "Biblioteca de poze pastreaza toate pozele incarcate. Pozele sunt redimensionate automat (max 1200px).",
+                "Poti incarca poze direct in biblioteca apasand butonul 'Incarca' din sectiunea Biblioteca.",
+              ]} />
+            </div>
             <GalleryManager
               category="kuziini"
               password={password}
               slots={gallerySlots}
+              aspect={galleryAspect}
               images={galleryImages}
               library={galleryLibrary}
               onUpdate={(d) => {
                 setGallerySlots(d.slots);
+                if (d.aspect) setGalleryAspect(d.aspect);
                 setGalleryImages(d.images);
                 if (d.library) setGalleryLibrary(d.library);
               }}
@@ -382,7 +443,16 @@ export default function AdminPage() {
         {/* Umbrellas */}
         {tab === "umbrellas" && (
           <>
-            <p className="text-white/30 text-xs">{data.umbrellas.length} umbrele</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/30 text-xs">{data.umbrellas.length} umbrele</p>
+              <SectionHelp items={[
+                "Aici vezi statusul tuturor umbrelelor inregistrate in sistem.",
+                "Verde 'Ocupat' = umbrela are o sesiune activa (un client a scanat QR-ul).",
+                "Gri 'Liber' = umbrela este disponibila, niciun client nu a scanat QR-ul.",
+                "Informatiile arata: numarul de telefon al clientului si ora la care a inceput sesiunea.",
+                "Zona umbrelelei (Lounge, Beach, VIP) ajuta la organizarea spatiului.",
+              ]} />
+            </div>
             {data.umbrellas.map((u) => (
               <div key={u.id} className="bg-white/[0.03] border border-white/[0.06] p-4">
                 <div className="flex items-center justify-between mb-1">

@@ -1832,8 +1832,11 @@ export const PROMO_BANNERS: PromoBanner[] = LOFT_BANNERS;
 
 // ─── Landing Page Galleries ──────────────────────────────────────────────────
 
+export type GalleryAspect = "square" | "portrait" | "landscape";
+
 export interface GalleryConfig {
   slots: number; // 1, 2, 3, 4, or 6
+  aspect: GalleryAspect;
   images: GalleryImage[];
 }
 
@@ -1845,6 +1848,7 @@ export interface GalleryImage {
 
 export const LOFT_GALLERY: GalleryConfig = {
   slots: 3,
+  aspect: "square",
   images: [
     { id: "lg-1", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-featured.jpg", order: 0 },
     { id: "lg-2", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-1-1024x684.jpg", order: 1 },
@@ -1854,6 +1858,7 @@ export const LOFT_GALLERY: GalleryConfig = {
 
 export const KUZIINI_GALLERY: GalleryConfig = {
   slots: 3,
+  aspect: "square",
   images: [
     { id: "kg-1", url: "https://kuziini.ro/wp-content/uploads/2025/02/IMG-20240403-WA0019.jpg", order: 0 },
     { id: "kg-2", url: "https://kuziini.ro/wp-content/uploads/2025/02/aqua-marina-1.jpg", order: 1 },

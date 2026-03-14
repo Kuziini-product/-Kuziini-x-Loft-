@@ -17,6 +17,7 @@ function getLibrary(category: BannerCategory): LibraryPhoto[] {
 function setGallery(category: BannerCategory, config: Partial<GalleryConfig>) {
   const target = category === "loft" ? LOFT_GALLERY : KUZIINI_GALLERY;
   if (config.slots !== undefined) target.slots = config.slots;
+  if (config.aspect !== undefined) target.aspect = config.aspect;
   if (config.images !== undefined) {
     target.images.length = 0;
     config.images.forEach((img) => target.images.push(img));
@@ -33,6 +34,7 @@ function galleryResponse(gallery: GalleryConfig, library: LibraryPhoto[]) {
     success: true,
     data: {
       slots: gallery.slots,
+      aspect: gallery.aspect,
       images: [...gallery.images].sort((a, b) => a.order - b.order),
       library: [...library].sort((a, b) => b.addedAt.localeCompare(a.addedAt)),
     },
@@ -62,6 +64,7 @@ export async function GET(req: NextRequest) {
     success: true,
     data: {
       slots: gallery.slots,
+      aspect: gallery.aspect,
       images: [...gallery.images].sort((a, b) => a.order - b.order),
     },
   });
@@ -178,6 +181,15 @@ export async function POST(req: NextRequest) {
         }
       });
       setGallery(category, { images: reordered });
+      return NextResponse.json(galleryResponse(gallery, library));
+    }
+
+    case "setAspect": {
+      const { aspect } = body as { aspect: string };
+      if (!["square", "portrait", "landscape"].includes(aspect)) {
+        return NextResponse.json({ success: false, error: "Aspect invalid." }, { status: 400 });
+      }
+      gallery.aspect = aspect as GalleryConfig["aspect"];
       return NextResponse.json(galleryResponse(gallery, library));
     }
 

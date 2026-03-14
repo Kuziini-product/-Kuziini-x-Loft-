@@ -193,6 +193,8 @@ export interface PromoBanner {
   image?: string; // base64 data URL
   color: string;
   order: number;
+  instagramUrl?: string; // Kuziini: link to Instagram post
+  menuItemId?: string;   // LOFT: menu item to add to cart on click
 }
 
 export type BannerCategory = "loft" | "kuziini";

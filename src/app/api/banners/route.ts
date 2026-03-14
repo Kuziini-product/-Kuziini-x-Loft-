@@ -54,11 +54,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, data: banners });
 
     case "add": {
-      const { title, subtitle, emoji, image } = body as {
+      const { title, subtitle, emoji, image, instagramUrl, menuItemId } = body as {
         title: string;
         subtitle?: string;
         emoji?: string;
         image?: string;
+        instagramUrl?: string;
+        menuItemId?: string;
       };
       if (!title) {
         return NextResponse.json({ success: false, error: "Titlul este obligatoriu." }, { status: 400 });
@@ -71,6 +73,8 @@ export async function POST(req: NextRequest) {
         image: image || undefined,
         color: "",
         order: banners.length,
+        instagramUrl: instagramUrl || undefined,
+        menuItemId: menuItemId || undefined,
       };
       banners.push(newBanner);
       setBanners(category, banners);
@@ -78,12 +82,14 @@ export async function POST(req: NextRequest) {
     }
 
     case "update": {
-      const { bannerId, title, subtitle, emoji, image } = body as {
+      const { bannerId, title, subtitle, emoji, image, instagramUrl, menuItemId } = body as {
         bannerId: string;
         title?: string;
         subtitle?: string;
         emoji?: string;
         image?: string | null;
+        instagramUrl?: string | null;
+        menuItemId?: string | null;
       };
       const idx = banners.findIndex((b) => b.id === bannerId);
       if (idx === -1) {
@@ -93,6 +99,8 @@ export async function POST(req: NextRequest) {
       if (subtitle !== undefined) banners[idx].subtitle = subtitle;
       if (emoji !== undefined) banners[idx].emoji = emoji;
       if (image !== undefined) banners[idx].image = image || undefined;
+      if (instagramUrl !== undefined) banners[idx].instagramUrl = instagramUrl || undefined;
+      if (menuItemId !== undefined) banners[idx].menuItemId = menuItemId || undefined;
       setBanners(category, banners);
       return NextResponse.json({ success: true, data: banners });
     }

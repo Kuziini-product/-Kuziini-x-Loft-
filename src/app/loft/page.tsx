@@ -4,9 +4,10 @@ import { useState, useRef, useCallback } from "react";
 import { Lock, RefreshCw, ImageIcon, QrCode, Plus, Trash2, Download, Printer, LayoutGrid } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { PromoBanner } from "@/types";
-import type { GalleryImage, LibraryPhoto } from "@/lib/mock-data";
+import type { GalleryImage, GalleryAspect, LibraryPhoto } from "@/lib/mock-data";
 import BannerManager from "@/components/BannerManager";
 import GalleryManager from "@/components/GalleryManager";
+import SectionHelp from "@/components/SectionHelp";
 
 type Tab = "banners" | "qrcodes" | "gallery";
 
@@ -24,6 +25,7 @@ export default function LoftPage() {
   const [banners, setBanners] = useState<PromoBanner[]>([]);
   const [tab, setTab] = useState<Tab>("banners");
   const [gallerySlots, setGallerySlots] = useState(3);
+  const [galleryAspect, setGalleryAspect] = useState<GalleryAspect>("square");
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [galleryLibrary, setGalleryLibrary] = useState<LibraryPhoto[]>([]);
 
@@ -66,6 +68,7 @@ export default function LoftPage() {
         .then((j) => {
           if (j.success) {
             setGallerySlots(j.data.slots);
+            if (j.data.aspect) setGalleryAspect(j.data.aspect);
             setGalleryImages(j.data.images);
             if (j.data.library) setGalleryLibrary(j.data.library);
           }
@@ -282,9 +285,20 @@ export default function LoftPage() {
         {/* Banners Tab */}
         {tab === "banners" && (
           <>
-            <p className="text-white/30 text-xs mb-4">
-              {banners.length} bannere · Apar pe pagina clienților în secțiunea LOFT
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-white/30 text-xs">
+                {banners.length} bannere · Apar pe pagina clienților în secțiunea LOFT
+              </p>
+              <SectionHelp items={[
+                "Bannerele apar pe pagina clientului (pagina umbrelelei) si se rotesc automat la fiecare 4 secunde.",
+                "Apasa 'Adauga banner' pentru a crea un banner nou. Titlul este obligatoriu.",
+                "Poti adauga un emoji sau o imagine (max 500KB) pentru a face bannerul mai vizibil.",
+                "Sectiunea 'Produs din meniu' iti permite sa asociezi un produs. Cand clientul apasa pe banner, produsul se adauga automat in cosul lui.",
+                "Foloseste sagetile sus/jos pentru a schimba ordinea bannerelor.",
+                "Apasa iconita de editare (salvare) pentru a modifica un banner existent.",
+                "Apasa iconita rosie (cos de gunoi) pentru a sterge un banner.",
+              ]} />
+            </div>
             <BannerManager
               category="loft"
               password={storedPassword}
@@ -297,17 +311,30 @@ export default function LoftPage() {
         {/* Gallery Tab */}
         {tab === "gallery" && (
           <>
-            <p className="text-white/30 text-xs mb-4">
-              Pozele apar pe pagina de landing în secțiunea LOFT
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-white/30 text-xs">
+                Pozele apar pe pagina de landing in sectiunea LOFT
+              </p>
+              <SectionHelp items={[
+                "Alege numarul de ferestre (1, 2, 3, 4 sau 6) pentru a seta cate poze apar pe landing page.",
+                "Alege aspectul imaginii: Patrat, Portret sau Peisaj. Aceasta schimba forma tuturor ferestrelor.",
+                "Apasa pe o fereastra goala pentru a alege o poza din biblioteca sau apasa 'Din PC' pentru a incarca direct.",
+                "Treci mouse-ul peste o poza existenta pentru a vedea optiunile: Inlocuieste, Biblioteca sau Sterge.",
+                "Poti trage si plasa pozele intre ferestre pentru a le schimba ordinea (drag & drop).",
+                "Biblioteca de poze pastreaza toate pozele incarcate. Pozele sunt redimensionate automat (max 1200px).",
+                "Poti incarca poze direct in biblioteca apasand butonul 'Incarca' din sectiunea Biblioteca.",
+              ]} />
+            </div>
             <GalleryManager
               category="loft"
               password={storedPassword}
               slots={gallerySlots}
+              aspect={galleryAspect}
               images={galleryImages}
               library={galleryLibrary}
               onUpdate={(d) => {
                 setGallerySlots(d.slots);
+                if (d.aspect) setGalleryAspect(d.aspect);
                 setGalleryImages(d.images);
                 if (d.library) setGalleryLibrary(d.library);
               }}
@@ -318,6 +345,19 @@ export default function LoftPage() {
         {/* QR Codes Tab */}
         {tab === "qrcodes" && (
           <>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-white/30 text-xs">
+                QR codes pentru umbrele
+              </p>
+              <SectionHelp items={[
+                "Fiecare umbrela are un QR code unic care duce clientul la pagina de comanda.",
+                "Adauga o umbrela noua introducand ID-ul (ex: C-01) si selectand zona.",
+                "Apasa 'Salveaza' pe fiecare QR pentru a-l descarca ca imagine PNG.",
+                "Apasa 'Printeaza toate' pentru a deschide o pagina de print cu toate QR-urile.",
+                "Sterge o umbrela apasand iconita rosie de pe cardul QR-ului.",
+                "QR-ul generat duce la: kuziini.app/u/[ID-UMBRELA]",
+              ]} />
+            </div>
             {/* Add umbrella */}
             <div className="bg-white/[0.03] border border-white/[0.06] p-4 mb-4">
               <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">

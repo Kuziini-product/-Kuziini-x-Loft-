@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, MapPin, Phone, Mail, AtSign } from "lucide-react";
-import type { GalleryImage } from "@/lib/mock-data";
+import type { GalleryImage, GalleryAspect } from "@/lib/mock-data";
 
 interface GalleryData {
   slots: number;
+  aspect: GalleryAspect;
   images: GalleryImage[];
 }
 
@@ -19,6 +20,14 @@ function getGridCols(slots: number): string {
     case 4: return "grid-cols-2";
     case 6: return "grid-cols-3";
     default: return "grid-cols-2";
+  }
+}
+
+function getAspectClass(aspect: GalleryAspect): string {
+  switch (aspect) {
+    case "portrait": return "aspect-[3/4]";
+    case "landscape": return "aspect-[4/3]";
+    default: return "aspect-square";
   }
 }
 
@@ -174,7 +183,7 @@ export default function HomePage() {
               {loftGallery.images.slice(0, loftGallery.slots).map((img) => (
                 <div
                   key={img.id}
-                  className="relative aspect-square overflow-hidden border border-white/[0.08]"
+                  className={`relative ${getAspectClass(loftGallery.aspect)} overflow-hidden border border-white/[0.08]`}
                 >
                   <img
                     src={img.url}
@@ -199,7 +208,7 @@ export default function HomePage() {
               {kuziiniGallery.images.slice(0, kuziiniGallery.slots).map((img) => (
                 <div
                   key={img.id}
-                  className="relative aspect-square overflow-hidden border border-white/[0.08]"
+                  className={`relative ${getAspectClass(kuziiniGallery.aspect)} overflow-hidden border border-white/[0.08]`}
                 >
                   <img
                     src={img.url}
@@ -254,7 +263,7 @@ export default function HomePage() {
         </div>
 
         <p className="text-white/10 text-[10px] text-center tracking-wider">
-          &copy; 2026 Kuziini &times; LOFT. Toate drepturile rezervate.
+          &copy; 2026 Kuziini &times; LOFT. Toate drepturile rezervate. Dezvoltat de Kuziini Furniture Luxuri and More.
         </p>
       </footer>
     </div>

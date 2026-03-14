@@ -13,9 +13,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Spinner } from "@/components/ui";
-import { useSessionStore } from "@/store";
+import { useSessionStore, useCartStore } from "@/store";
 import { cn } from "@/lib/utils";
-import type { Umbrella, PromoBanner } from "@/types";
+import type { Umbrella, PromoBanner, MenuItem } from "@/types";
 
 async function fetchUmbrella(id: string) {
   const res = await fetch(`/api/umbrella/${id}`);
@@ -36,13 +36,16 @@ export default function LandingPage({
   const [kuziiniIdx, setKuziiniIdx] = useState(0);
   const [loftBanners, setLoftBanners] = useState<PromoBanner[]>([]);
   const [kuziiniBanners, setKuziiniBanners] = useState<PromoBanner[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [addedToast, setAddedToast] = useState<string | null>(null);
+  const addItem = useCartStore((s) => s.addItem);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["umbrella", umbrellaId],
     queryFn: () => fetchUmbrella(umbrellaId),
   });
 
-  // Fetch banners
+  // Fetch banners + menu items
   useEffect(() => {
     fetch("/api/banners?category=loft")
       .then((r) => r.json())
@@ -50,7 +53,10 @@ export default function LandingPage({
     fetch("/api/banners?category=kuziini")
       .then((r) => r.json())
       .then((j) => { if (j.success && j.data.length) setKuziiniBanners(j.data); });
-  }, []);
+    fetch(`/api/menu?umbrellaId=${umbrellaId}`)
+      .then((r) => r.json())
+      .then((j) => { if (j.success && j.data?.items) setMenuItems(j.data.items); });
+  }, [umbrellaId]);
 
   // Auto-rotate LOFT banners
   useEffect(() => {
@@ -108,6 +114,23 @@ export default function LandingPage({
   const loftBanner = loftBanners[loftIdx] || null;
   const kuziiniBanner = kuziiniBanners[kuziiniIdx] || null;
 
+  function handleBannerClick(banner: PromoBanner) {
+    // Kuziini banners: open Instagram
+    if (banner.instagramUrl) {
+      window.open(banner.instagramUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    // LOFT banners: add menu item to cart
+    if (banner.menuItemId) {
+      const item = menuItems.find((m) => m.id === banner.menuItemId);
+      if (item) {
+        addItem(item, 1);
+        setAddedToast(item.name);
+        setTimeout(() => setAddedToast(null), 2500);
+      }
+    }
+  }
+
   return (
     <>
       <div className="min-h-dvh bg-[#0A0A0A] text-white flex flex-col">
@@ -133,7 +156,7 @@ export default function LandingPage({
           {loftBanner && (
             <div className="w-full max-w-sm mb-3">
               <p className="text-[10px] font-bold text-white/20 tracking-[0.2em] uppercase mb-2">LOFT</p>
-              <BannerSlide banner={loftBanner} />
+              <BannerSlide banner={loftBanner} onClick={() => handleBannerClick(loftBanner)} />
               {loftBanners.length > 1 && (
                 <div className="flex gap-1 mt-2">
                   {loftBanners.map((_: PromoBanner, i: number) => (
@@ -154,7 +177,7 @@ export default function LandingPage({
           {kuziiniBanner && (
             <div className="w-full max-w-sm">
               <p className="text-[10px] font-bold text-white/20 tracking-[0.2em] uppercase mb-2">Kuziini</p>
-              <BannerSlide banner={kuziiniBanner} />
+              <BannerSlide banner={kuziiniBanner} onClick={() => handleBannerClick(kuziiniBanner)} />
               {kuziiniBanners.length > 1 && (
                 <div className="flex gap-1 mt-2">
                   {kuziiniBanners.map((_: PromoBanner, i: number) => (
@@ -218,19 +241,43 @@ export default function LandingPage({
             />
           </div>
         </div>
+
+        {/* Toast for added to cart */}
+        {addedToast && (
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-5 py-3 text-sm font-bold tracking-wide shadow-lg z-50 animate-fade-in">
+            ✓ {addedToast} adăugat în coș
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-function BannerSlide({ banner }: { banner: PromoBanner }) {
+function BannerSlide({ banner, onClick }: { banner: PromoBanner; onClick?: () => void }) {
+  const isClickable = !!(banner.instagramUrl || banner.menuItemId);
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] p-4 animate-fade-in transition-all duration-500">
+    <div
+      onClick={isClickable ? onClick : undefined}
+      className={cn(
+        "bg-white/[0.03] border border-white/[0.06] p-4 animate-fade-in transition-all duration-500",
+        isClickable && "cursor-pointer active:bg-white/[0.06]"
+      )}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-white tracking-wide">{banner.title}</p>
           {banner.subtitle && (
             <p className="text-white/40 text-xs mt-0.5">{banner.subtitle}</p>
+          )}
+          {banner.menuItemId && (
+            <p className="text-emerald-400/60 text-[9px] mt-1 font-bold tracking-wider uppercase">
+              Apasă pentru a adăuga în coș
+            </p>
+          )}
+          {banner.instagramUrl && (
+            <p className="text-pink-400/60 text-[9px] mt-1 font-bold tracking-wider uppercase">
+              Deschide pe Instagram
+            </p>
           )}
         </div>
         {banner.image ? (

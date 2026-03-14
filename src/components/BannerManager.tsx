@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Plus,
   Trash2,
@@ -10,8 +10,10 @@ import {
   Save,
   X,
   GripVertical,
+  Instagram,
+  ShoppingBag,
 } from "lucide-react";
-import type { PromoBanner, BannerCategory } from "@/types";
+import type { PromoBanner, BannerCategory, MenuItem } from "@/types";
 
 interface BannerManagerProps {
   category: BannerCategory;
@@ -19,6 +21,24 @@ interface BannerManagerProps {
   banners: PromoBanner[];
   onUpdate: (banners: PromoBanner[]) => void;
 }
+
+interface BannerFormData {
+  title: string;
+  subtitle: string;
+  emoji: string;
+  image: string;
+  instagramUrl: string;
+  menuItemId: string;
+}
+
+const EMPTY_FORM: BannerFormData = {
+  title: "",
+  subtitle: "",
+  emoji: "",
+  image: "",
+  instagramUrl: "",
+  menuItemId: "",
+};
 
 export default function BannerManager({
   category,
@@ -28,10 +48,22 @@ export default function BannerManager({
 }: BannerManagerProps) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ title: "", subtitle: "", emoji: "", image: "" });
+  const [form, setForm] = useState<BannerFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Fetch menu items for LOFT banner menu picker
+  useEffect(() => {
+    if (category !== "loft") return;
+    fetch("/api/menu?umbrellaId=A-01")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success && j.data?.items) setMenuItems(j.data.items);
+      })
+      .catch(() => {});
+  }, [category]);
 
   const apiCall = useCallback(
     async (action: string, extra: Record<string, unknown> = {}) => {
@@ -64,7 +96,6 @@ export default function BannerManager({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      // Limit to 500KB
       if (file.size > 500 * 1024) {
         setError("Imaginea trebuie să fie sub 500KB.");
         return;
@@ -88,9 +119,11 @@ export default function BannerManager({
       subtitle: form.subtitle,
       emoji: form.emoji,
       image: form.image || undefined,
+      instagramUrl: form.instagramUrl || undefined,
+      menuItemId: form.menuItemId || undefined,
     });
     if (result) {
-      setForm({ title: "", subtitle: "", emoji: "", image: "" });
+      setForm(EMPTY_FORM);
       setAdding(false);
     }
   }
@@ -102,6 +135,8 @@ export default function BannerManager({
       subtitle: form.subtitle,
       emoji: form.emoji,
       image: form.image || null,
+      instagramUrl: form.instagramUrl || null,
+      menuItemId: form.menuItemId || null,
     });
     setEditing(null);
   }
@@ -125,6 +160,8 @@ export default function BannerManager({
       subtitle: banner.subtitle || "",
       emoji: banner.emoji || "",
       image: banner.image || "",
+      instagramUrl: banner.instagramUrl || "",
+      menuItemId: banner.menuItemId || "",
     });
     setAdding(false);
   }
@@ -132,7 +169,7 @@ export default function BannerManager({
   function startAdd() {
     setAdding(true);
     setEditing(null);
-    setForm({ title: "", subtitle: "", emoji: "", image: "" });
+    setForm(EMPTY_FORM);
   }
 
   return (
@@ -155,6 +192,8 @@ export default function BannerManager({
               <BannerForm
                 form={form}
                 setForm={setForm}
+                category={category}
+                menuItems={menuItems}
                 onImageSelect={() =>
                   handleImageSelect((url) => setForm((f) => ({ ...f, image: url })))
                 }
@@ -201,6 +240,21 @@ export default function BannerManager({
                         <p className="text-white/40 text-xs truncate">{banner.subtitle}</p>
                       )}
                     </div>
+                  </div>
+                  {/* Tags for special features */}
+                  <div className="flex gap-1.5 mt-1.5 ml-6">
+                    {banner.instagramUrl && (
+                      <span className="flex items-center gap-1 bg-pink-500/10 text-pink-400 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">
+                        <Instagram className="w-3 h-3" />
+                        Instagram
+                      </span>
+                    )}
+                    {banner.menuItemId && (
+                      <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">
+                        <ShoppingBag className="w-3 h-3" />
+                        Produs meniu
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -249,6 +303,8 @@ export default function BannerManager({
           <BannerForm
             form={form}
             setForm={setForm}
+            category={category}
+            menuItems={menuItems}
             onImageSelect={() =>
               handleImageSelect((url) => setForm((f) => ({ ...f, image: url })))
             }
@@ -288,12 +344,14 @@ export default function BannerManager({
 function BannerForm({
   form,
   setForm,
+  category,
+  menuItems,
   onImageSelect,
 }: {
-  form: { title: string; subtitle: string; emoji: string; image: string };
-  setForm: React.Dispatch<
-    React.SetStateAction<{ title: string; subtitle: string; emoji: string; image: string }>
-  >;
+  form: BannerFormData;
+  setForm: React.Dispatch<React.SetStateAction<BannerFormData>>;
+  category: BannerCategory;
+  menuItems: MenuItem[];
   onImageSelect: () => void;
 }) {
   return (
@@ -338,6 +396,51 @@ function BannerForm({
           >
             Șterge imaginea
           </button>
+        </div>
+      )}
+
+      {/* Kuziini: Instagram URL */}
+      {category === "kuziini" && (
+        <div className="border-t border-white/[0.06] pt-2 mt-2">
+          <p className="text-pink-400 text-[10px] font-bold tracking-[0.15em] uppercase mb-1.5 flex items-center gap-1">
+            <Instagram className="w-3 h-3" />
+            Link Instagram (opțional)
+          </p>
+          <input
+            type="url"
+            value={form.instagramUrl}
+            onChange={(e) => setForm((f) => ({ ...f, instagramUrl: e.target.value }))}
+            placeholder="https://www.instagram.com/p/..."
+            className="w-full bg-white/5 border border-white/10 px-3 py-2 text-white text-sm outline-none focus:border-pink-400/50 placeholder:text-white/20"
+          />
+          <p className="text-white/20 text-[9px] mt-1">
+            La click, clientul va fi trimis direct pe Instagram
+          </p>
+        </div>
+      )}
+
+      {/* LOFT: Menu item picker */}
+      {category === "loft" && (
+        <div className="border-t border-white/[0.06] pt-2 mt-2">
+          <p className="text-emerald-400 text-[10px] font-bold tracking-[0.15em] uppercase mb-1.5 flex items-center gap-1">
+            <ShoppingBag className="w-3 h-3" />
+            Produs din meniu (opțional)
+          </p>
+          <select
+            value={form.menuItemId}
+            onChange={(e) => setForm((f) => ({ ...f, menuItemId: e.target.value }))}
+            className="w-full bg-white/5 border border-white/10 px-3 py-2 text-white text-sm outline-none focus:border-emerald-400/50"
+          >
+            <option value="">— Niciun produs —</option>
+            {menuItems.filter((m) => m.available).map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} — {item.price} RON
+              </option>
+            ))}
+          </select>
+          <p className="text-white/20 text-[9px] mt-1">
+            La click, produsul se adaugă direct în coșul clientului
+          </p>
         </div>
       )}
     </div>
