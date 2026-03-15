@@ -67,8 +67,8 @@ export default function HomePage() {
         <div className="relative z-10 text-center px-5 w-full max-w-lg flex flex-col flex-1 pb-16 pt-8">
           {/* Logos centered between top and CTA */}
           <div className="flex-1 flex flex-col items-center justify-center">
-            {/* LOFT + Mamaia */}
-            <div className="mb-6">
+            {/* LOFT + Mamaia — tap to access LOFT admin */}
+            <button onClick={() => router.push("/loft")} className="mb-6 block mx-auto">
               <img
                 src="/loft-logo.png"
                 alt="LOFT"
@@ -77,16 +77,16 @@ export default function HomePage() {
               <p className="text-white text-sm font-light tracking-[0.5em] uppercase">
                 Mamaia
               </p>
-            </div>
+            </button>
 
-            {/* Logo Kuziini */}
-            <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto w-fit">
+            {/* Logo Kuziini — tap to access Kuziini admin */}
+            <button onClick={() => router.push("/admin")} className="block mx-auto w-fit">
               <img
                 src="/kuziini-logo.png"
                 alt="Kuziini Furniture & More"
                 className="w-[140px] h-auto rounded-2xl shadow-2xl shadow-black/60 border border-white/10 invert brightness-200"
               />
-            </a>
+            </button>
           </div>
 
           <button
@@ -245,19 +245,21 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="py-12 px-5 border-t border-white/[0.06]">
         <div className="flex items-center justify-center gap-4 mb-6">
-          <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer">
+          <button onClick={() => router.push("/admin")}>
             <img
               src="/kuziini-logo.png"
               alt="Kuziini"
               className="w-[100px] h-auto rounded-2xl border border-white/10 invert brightness-200 object-contain"
             />
-          </a>
+          </button>
           <span className="text-[#C9AB81]/40 text-lg font-bold">x</span>
-          <img
-            src="/loft-logo.png"
-            alt="LOFT"
-            className="h-[26px] object-contain opacity-80"
-          />
+          <button onClick={() => router.push("/loft")}>
+            <img
+              src="/loft-logo.png"
+              alt="LOFT"
+              className="h-[26px] object-contain opacity-80"
+            />
+          </button>
         </div>
 
         <div className="space-y-2.5 mb-8 text-center">

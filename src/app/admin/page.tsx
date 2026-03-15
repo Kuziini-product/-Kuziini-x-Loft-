@@ -249,7 +249,7 @@ export default function AdminPage() {
             <div className="w-16 h-16 bg-[#C9AB81]/20 border border-[#C9AB81]/30 flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-[#C9AB81]" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">Admin</h1>
+            <h1 className="text-2xl font-bold text-white tracking-wide">Kuziini</h1>
             <p className="text-white/40 text-xs mt-1">Kuziini × LOFT</p>
           </div>
 
@@ -307,7 +307,7 @@ export default function AdminPage() {
       <div className="bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/[0.06] px-4 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold tracking-wide">Admin Panel</h1>
+            <h1 className="text-lg font-bold tracking-wide">Kuziini Panel</h1>
             <p className="text-[#C9AB81] text-[10px] tracking-[0.2em] uppercase">Kuziini × LOFT</p>
           </div>
           <button
