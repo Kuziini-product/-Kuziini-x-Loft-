@@ -164,7 +164,20 @@ export default function HomePage() {
           </div>
 
           <button
-            onClick={() => {
+            onClick={async () => {
+              // If app not installed and install prompt available, trigger install first
+              if (!isInstalled && deferredPromptRef.current) {
+                const p = deferredPromptRef.current as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+                try {
+                  await p.prompt();
+                  const { outcome } = await p.userChoice;
+                  if (outcome === "accepted") {
+                    deferredPromptRef.current = null;
+                    setCanInstall(false);
+                  }
+                } catch { /* prompt already used */ }
+              }
+              // Then navigate
               if (userSession?.umbrellaId) {
                 router.push(`/u/${userSession.umbrellaId}`);
               } else {
