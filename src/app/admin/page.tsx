@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Lock, Users, ShoppingBag, Receipt, DollarSign, RefreshCw, Umbrella, ImageIcon, LayoutGrid, FileText, Eye, Trash2, Heart, BarChart3, ArrowUpDown, ExternalLink, Bell, ChevronRight, ArrowLeft, Clock, Smartphone, Monitor } from "lucide-react";
+import { Lock, Users, ShoppingBag, Receipt, DollarSign, RefreshCw, Umbrella, ImageIcon, LayoutGrid, FileText, Eye, Trash2, Heart, BarChart3, ArrowUpDown, ExternalLink, Bell, ChevronRight, ArrowLeft, Clock, Smartphone, Monitor, Volume2, VolumeX } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { PromoBanner } from "@/types";
 import type { GalleryImage, GalleryAspect, LibraryPhoto } from "@/lib/mock-data";
@@ -152,7 +152,66 @@ interface AccessData {
 type Tab = "overview" | "logins" | "orders" | "bills" | "umbrellas" | "banners" | "gallery" | "offers" | "clients" | "rapoarte";
 
 const SESSION_KEY = "kuziini_admin_session";
-const SESSION_HOURS = 1;
+const SESSION_HOURS = 24; // Stay logged in for 24h
+
+// ── Audio notification system ──
+let audioCtx: AudioContext | null = null;
+
+function getAudioCtx(): AudioContext {
+  if (!audioCtx) audioCtx = new AudioContext();
+  return audioCtx;
+}
+
+function playTone(freq: number, duration: number, type: OscillatorType = "sine", vol = 0.3) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch { /* audio not available */ }
+}
+
+function soundNewUser() {
+  // Ascending chime: C5 → E5 → G5
+  playTone(523, 0.15, "sine", 0.25);
+  setTimeout(() => playTone(659, 0.15, "sine", 0.25), 120);
+  setTimeout(() => playTone(784, 0.3, "sine", 0.3), 240);
+}
+
+function soundPayment() {
+  // Cash register: two quick high tones + ding
+  playTone(880, 0.08, "square", 0.15);
+  setTimeout(() => playTone(880, 0.08, "square", 0.15), 100);
+  setTimeout(() => playTone(1320, 0.4, "sine", 0.3), 200);
+}
+
+function soundOffer() {
+  // Soft bell: low to high sweep
+  playTone(440, 0.2, "sine", 0.2);
+  setTimeout(() => playTone(660, 0.2, "sine", 0.25), 180);
+  setTimeout(() => playTone(880, 0.35, "triangle", 0.2), 360);
+}
+
+function soundHeart() {
+  // Soft pop: quick warm tone
+  playTone(700, 0.12, "sine", 0.15);
+  setTimeout(() => playTone(900, 0.18, "sine", 0.2), 80);
+}
+
+function soundInstall() {
+  // Fanfare: ascending major chord
+  playTone(523, 0.2, "sine", 0.2);
+  setTimeout(() => playTone(659, 0.2, "sine", 0.2), 150);
+  setTimeout(() => playTone(784, 0.2, "sine", 0.25), 300);
+  setTimeout(() => playTone(1047, 0.5, "sine", 0.3), 450);
+}
 
 function getSavedSession(): string | null {
   try {
@@ -195,6 +254,8 @@ export default function AdminPage() {
   const [selectedGalleryUser, setSelectedGalleryUser] = useState<GalleryUserStat | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
   const [onlinePhones, setOnlinePhones] = useState<Set<string>>(new Set());
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const prevStatsRef = useRef<{ logins: number; orders: number; bills: number; offers: number; likes: number; accessEntries: number } | null>(null);
   const autoLoginDone = useRef(false);
 
   // Poll online users count
@@ -261,6 +322,34 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, password]);
+
+  // Detect changes and play audio notifications
+  useEffect(() => {
+    if (!data || !soundEnabled) return;
+    const curr = {
+      logins: data.stats.totalLogins,
+      orders: data.stats.totalOrders,
+      bills: data.stats.totalBillRequests,
+      offers: offers.length,
+      likes: galleryStats?.photos?.reduce((s, p) => s + p.likes, 0) || 0,
+      accessEntries: accessData?.totalEntries || 0,
+    };
+    const prev = prevStatsRef.current;
+    if (prev) {
+      // New user registered (scan QR)
+      if (curr.logins > prev.logins) soundNewUser();
+      // New bill/payment request
+      if (curr.bills > prev.bills) soundPayment();
+      // New offer request
+      if (curr.offers > prev.offers) soundOffer();
+      // New like/heart
+      if (curr.likes > prev.likes) soundHeart();
+      // New access (possible app install/open)
+      if (curr.accessEntries > prev.accessEntries && curr.logins === prev.logins) soundInstall();
+    }
+    prevStatsRef.current = curr;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, offers, galleryStats, accessData]);
 
   async function fetchData(pw?: string) {
     setLoading(true);
@@ -445,6 +534,21 @@ export default function AdminPage() {
             <p className="text-[#C9AB81] text-[10px] tracking-[0.2em] uppercase">Kuziini × LOFT</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Sound toggle */}
+            <button
+              onClick={() => {
+                setSoundEnabled(!soundEnabled);
+                if (!soundEnabled) {
+                  // Resume audio context on user gesture
+                  try { getAudioCtx().resume(); } catch {}
+                  playTone(880, 0.15, "sine", 0.2);
+                }
+              }}
+              className={`w-9 h-9 flex items-center justify-center transition-colors ${soundEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-white/30"}`}
+              title={soundEnabled ? "Sunet activat" : "Sunet dezactivat"}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
             {/* Online users badge */}
             <div className="h-9 flex items-center gap-1.5 px-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold tracking-wider">
               <span className="relative flex h-2 w-2">
