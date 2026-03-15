@@ -156,15 +156,34 @@ const SESSION_HOURS = 24; // Stay logged in for 24h
 
 // ── Audio notification system ──
 let audioCtx: AudioContext | null = null;
+let audioResumed = false;
 
 function getAudioCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === "suspended") audioCtx.resume();
   return audioCtx;
+}
+
+// Resume audio context on any user interaction
+if (typeof window !== "undefined") {
+  const resumeAudio = () => {
+    if (audioResumed) return;
+    try {
+      const ctx = getAudioCtx();
+      ctx.resume().then(() => { audioResumed = true; });
+    } catch {}
+  };
+  document.addEventListener("click", resumeAudio, { once: false });
+  document.addEventListener("keydown", resumeAudio, { once: false });
 }
 
 function playTone(freq: number, duration: number, type: OscillatorType = "sine", vol = 0.3) {
   try {
     const ctx = getAudioCtx();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+      return; // skip this time, will play next
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
@@ -441,6 +460,8 @@ export default function AdminPage() {
       setError("Introdu parola.");
       return;
     }
+    // Resume audio context on login (user gesture)
+    try { getAudioCtx().resume().then(() => { audioResumed = true; }); } catch {}
     fetchData();
   }
 
@@ -537,11 +558,17 @@ export default function AdminPage() {
             {/* Sound toggle */}
             <button
               onClick={() => {
-                setSoundEnabled(!soundEnabled);
-                if (!soundEnabled) {
-                  // Resume audio context on user gesture
-                  try { getAudioCtx().resume(); } catch {}
-                  playTone(880, 0.15, "sine", 0.2);
+                const next = !soundEnabled;
+                setSoundEnabled(next);
+                if (next) {
+                  // Resume audio context on user gesture + play test sound
+                  try {
+                    const ctx = getAudioCtx();
+                    ctx.resume().then(() => {
+                      audioResumed = true;
+                      soundNewUser(); // Play test sound
+                    });
+                  } catch {}
                 }
               }}
               className={`w-9 h-9 flex items-center justify-center transition-colors ${soundEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-white/30"}`}
