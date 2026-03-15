@@ -61,33 +61,36 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-[#0A0A0A]" />
         </div>
 
-        <div className="relative z-10 text-center px-5 w-full max-w-lg">
-          {/* LOFT + Mamaia centered */}
-          <div className="mb-6">
-            <img
-              src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
-              alt="LOFT"
-              className="h-10 object-contain mx-auto mb-1"
-            />
-            <p className="text-white text-sm font-light tracking-[0.5em] uppercase">
-              Mamaia
-            </p>
-          </div>
+        <div className="relative z-10 text-center px-5 w-full max-w-lg flex flex-col flex-1 pb-16 pt-8">
+          {/* Logos centered between top and CTA */}
+          <div className="flex-1 flex flex-col items-center justify-center">
+            {/* LOFT + Mamaia */}
+            <div className="mb-6">
+              <img
+                src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
+                alt="LOFT"
+                className="h-10 object-contain mx-auto mb-1"
+              />
+              <p className="text-white text-sm font-light tracking-[0.5em] uppercase">
+                Mamaia
+              </p>
+            </div>
 
-          {/* Logo Kuziini */}
-          <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto mb-10 w-fit">
-            <Image
-              src="/kuziini-logo.png"
-              alt="Kuziini Furniture & More"
-              width={140}
-              height={140}
-              className="rounded-2xl shadow-2xl shadow-black/60 border border-white/10 invert brightness-200"
-            />
-          </a>
+            {/* Logo Kuziini */}
+            <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto w-fit">
+              <Image
+                src="/kuziini-logo.png"
+                alt="Kuziini Furniture & More"
+                width={140}
+                height={140}
+                className="rounded-2xl shadow-2xl shadow-black/60 border border-white/10 invert brightness-200"
+              />
+            </a>
+          </div>
 
           <Link
             href="/scan"
-            className="inline-flex items-center gap-2 bg-[#C9AB81] text-[#0A0A0A] px-8 py-3.5 font-bold text-sm tracking-[0.15em] uppercase transition-all active:opacity-80"
+            className="inline-flex items-center justify-center gap-2 bg-[#C9AB81] text-[#0A0A0A] px-8 py-3.5 font-bold text-sm tracking-[0.15em] uppercase transition-all active:opacity-80"
           >
             Scanează QR & Comandă
             <ChevronRight className="w-4 h-4" />
