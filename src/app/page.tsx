@@ -88,7 +88,7 @@ export default function HomePage() {
           {/* Brand names */}
           <div className="flex items-center justify-center gap-4 mb-5">
             <span className="text-xl font-bold tracking-[0.2em] uppercase">Kuziini</span>
-            <span className="text-xl font-bold text-[#C9AB81]">×</span>
+            <span className="text-xl font-bold text-[#C9AB81]">&times;</span>
             <span className="text-xl font-bold tracking-[0.2em] uppercase">LOFT</span>
           </div>
 
@@ -572,14 +572,14 @@ function Lightbox({
                   }}
                   className={`relative aspect-square overflow-hidden border-2 transition-all ${
                     selectedPhotos.has(i)
-                      ? "border-[#C9AB81] opacity-100"
+                      ? "border-emerald-400 opacity-100"
                       : "border-white/[0.08] opacity-60"
                   }`}
                 >
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   {selectedPhotos.has(i) && (
-                    <div className="absolute inset-0 bg-[#C9AB81]/20 flex items-center justify-center">
-                      <CheckCircle className="w-7 h-7 text-[#C9AB81] drop-shadow-lg" />
+                    <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                      <CheckCircle className="w-7 h-7 text-emerald-400 drop-shadow-lg" />
                     </div>
                   )}
                   <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded-sm">#{i + 1}</span>
