@@ -14,6 +14,8 @@ export interface PhotoStats {
 export interface ClientProfile {
   phone: string;
   name: string;
+  email: string;
+  source: ("receptie" | "oferta")[];
   totalVisits: number;
   firstVisit: string;
   lastVisit: string;
@@ -24,6 +26,7 @@ export interface ClientProfile {
   kuziiniPhotosViewed: number;
   kuziiniPhotoLikes: number;
   offerRequests: number;
+  offerDetails: { message: string; photoUrl: string; timestamp: string }[];
   umbrellas: string[];
 }
 
@@ -125,8 +128,16 @@ export async function POST(req: NextRequest) {
       logins: { name: string; phone: string; umbrellaId: string; timestamp: string }[];
       orders: { phone: string; total: number; timestamp: string }[];
       billRequests: { umbrellaId: string; paymentMethod: string; amount: number }[];
-      offers: { phone: string; timestamp: string }[];
+      offers: { name: string; phone: string; email: string; message: string; photoUrl: string; timestamp: string }[];
     };
+
+    const makeClient = (phone: string, timestamp: string): ClientProfile => ({
+      phone, name: "—", email: "", source: [],
+      totalVisits: 0, firstVisit: timestamp, lastVisit: timestamp,
+      totalSpent: 0, totalOrders: 0, avgPerVisit: 0,
+      paymentMethods: {}, kuziiniPhotosViewed: 0, kuziiniPhotoLikes: 0,
+      offerRequests: 0, offerDetails: [], umbrellas: [],
+    });
 
     const photoStats = await getPhotoStats();
     const viewLog = await getViewLog();
@@ -137,26 +148,11 @@ export async function POST(req: NextRequest) {
     // Process logins
     (logins || []).forEach((l) => {
       if (!l.phone) return;
-      if (!clients[l.phone]) {
-        clients[l.phone] = {
-          phone: l.phone,
-          name: l.name || "—",
-          totalVisits: 0,
-          firstVisit: l.timestamp,
-          lastVisit: l.timestamp,
-          totalSpent: 0,
-          totalOrders: 0,
-          avgPerVisit: 0,
-          paymentMethods: {},
-          kuziiniPhotosViewed: 0,
-          kuziiniPhotoLikes: 0,
-          offerRequests: 0,
-          umbrellas: [],
-        };
-      }
+      if (!clients[l.phone]) clients[l.phone] = makeClient(l.phone, l.timestamp);
       const c = clients[l.phone];
       c.totalVisits++;
       if (l.name && l.name !== "—") c.name = l.name;
+      if (!c.source.includes("receptie")) c.source.push("receptie");
       if (l.timestamp < c.firstVisit) c.firstVisit = l.timestamp;
       if (l.timestamp > c.lastVisit) c.lastVisit = l.timestamp;
       if (l.umbrellaId && !c.umbrellas.includes(l.umbrellaId)) {
@@ -167,23 +163,7 @@ export async function POST(req: NextRequest) {
     // Process orders
     (orders || []).forEach((o) => {
       if (!o.phone) return;
-      if (!clients[o.phone]) {
-        clients[o.phone] = {
-          phone: o.phone,
-          name: "—",
-          totalVisits: 0,
-          firstVisit: o.timestamp,
-          lastVisit: o.timestamp,
-          totalSpent: 0,
-          totalOrders: 0,
-          avgPerVisit: 0,
-          paymentMethods: {},
-          kuziiniPhotosViewed: 0,
-          kuziiniPhotoLikes: 0,
-          offerRequests: 0,
-          umbrellas: [],
-        };
-      }
+      if (!clients[o.phone]) clients[o.phone] = makeClient(o.phone, o.timestamp);
       clients[o.phone].totalOrders++;
       clients[o.phone].totalSpent += o.total;
     });
@@ -199,12 +179,22 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Process offers
+    // Process offers — also create client profiles for offer submitters
     (offers || []).forEach((o) => {
       if (!o.phone) return;
-      if (clients[o.phone]) {
-        clients[o.phone].offerRequests++;
-      }
+      if (!clients[o.phone]) clients[o.phone] = makeClient(o.phone, o.timestamp);
+      const c = clients[o.phone];
+      c.offerRequests++;
+      if (o.name && o.name !== "—") c.name = o.name;
+      if (o.email) c.email = o.email;
+      if (!c.source.includes("oferta")) c.source.push("oferta");
+      if (o.timestamp < c.firstVisit) c.firstVisit = o.timestamp;
+      if (o.timestamp > c.lastVisit) c.lastVisit = o.timestamp;
+      c.offerDetails.push({
+        message: o.message || "",
+        photoUrl: o.photoUrl || "",
+        timestamp: o.timestamp,
+      });
     });
 
     // Calculate averages

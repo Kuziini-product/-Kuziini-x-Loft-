@@ -72,6 +72,8 @@ interface OfferEntry {
 interface ClientProfile {
   phone: string;
   name: string;
+  email: string;
+  source: ("receptie" | "oferta")[];
   totalVisits: number;
   firstVisit: string;
   lastVisit: string;
@@ -82,6 +84,7 @@ interface ClientProfile {
   kuziiniPhotosViewed: number;
   kuziiniPhotoLikes: number;
   offerRequests: number;
+  offerDetails: { message: string; photoUrl: string; timestamp: string }[];
   umbrellas: string[];
 }
 
@@ -99,6 +102,7 @@ interface AnalyticsData {
 }
 
 type ClientSort = "spent" | "visits" | "recent" | "orders" | "name";
+type ClientFilter = "all" | "receptie" | "oferta";
 
 type Tab = "overview" | "logins" | "orders" | "bills" | "umbrellas" | "banners" | "gallery" | "offers" | "clients";
 
@@ -118,6 +122,7 @@ export default function AdminPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [clientSort, setClientSort] = useState<ClientSort>("spent");
   const [clientSearch, setClientSearch] = useState("");
+  const [clientFilter, setClientFilter] = useState<ClientFilter>("all");
 
   async function fetchData(pw?: string) {
     setLoading(true);
@@ -644,11 +649,28 @@ export default function AdminPage() {
                   </div>
                 )}
 
+                {/* Filter by source */}
+                <div className="flex gap-1.5 mb-3">
+                  {([["all", "Toți"], ["receptie", "Recepție"], ["oferta", "Cereri ofertă"]] as [ClientFilter, string][]).map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => setClientFilter(key)}
+                      className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-all ${
+                        clientFilter === key
+                          ? "bg-[#C9AB81] text-[#0A0A0A]"
+                          : "bg-white/[0.06] text-white/40"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Sort & search */}
                 <div className="flex gap-2 mb-3">
                   <input
                     type="text"
-                    placeholder="Caută client..."
+                    placeholder="Caută client (nume, telefon, email)..."
                     value={clientSearch}
                     onChange={(e) => setClientSearch(e.target.value)}
                     className="flex-1 bg-white/[0.06] border border-white/[0.1] px-3 py-2 text-white text-xs placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
@@ -670,17 +692,16 @@ export default function AdminPage() {
                   </button>
                 </div>
 
-                <p className="text-white/30 text-xs mb-3">
-                  {analyticsData.clients.length} clienți
-                </p>
-
                 {/* Client list */}
                 {(() => {
                   let filtered = [...analyticsData.clients];
+                  if (clientFilter !== "all") {
+                    filtered = filtered.filter((c) => c.source.includes(clientFilter));
+                  }
                   if (clientSearch.trim()) {
                     const q = clientSearch.toLowerCase();
                     filtered = filtered.filter(
-                      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q)
+                      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.email.toLowerCase().includes(q)
                     );
                   }
                   switch (clientSort) {
@@ -690,17 +711,38 @@ export default function AdminPage() {
                     case "orders": filtered.sort((a, b) => b.totalOrders - a.totalOrders); break;
                     case "name": filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
                   }
-                  return filtered.map((c) => (
+                  return (<>
+                    <p className="text-white/30 text-xs mb-3">
+                      {filtered.length} clienți
+                      {clientFilter !== "all" && ` (filtru: ${clientFilter === "receptie" ? "recepție" : "cereri ofertă"})`}
+                    </p>
+                    {filtered.map((c) => (
                     <div key={c.phone} className="bg-white/[0.03] border border-white/[0.06] p-4 mb-3">
+                      {/* Header */}
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-bold text-sm text-white tracking-wide">{c.name}</p>
                           <p className="text-xs text-white/40">{c.phone}</p>
+                          {c.email && <p className="text-xs text-[#C9AB81]/70">{c.email}</p>}
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-[#C9AB81]">{formatPrice(c.totalSpent)}</p>
                           <p className="text-[10px] text-white/30">{c.totalVisits} vizite</p>
                         </div>
+                      </div>
+
+                      {/* Source badges */}
+                      <div className="flex gap-1.5 mb-2">
+                        {c.source.includes("receptie") && (
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 font-bold tracking-wider uppercase">
+                            Recepție
+                          </span>
+                        )}
+                        {c.source.includes("oferta") && (
+                          <span className="text-[9px] bg-[#C9AB81]/20 text-[#C9AB81] px-2 py-0.5 font-bold tracking-wider uppercase">
+                            Cerere ofertă
+                          </span>
+                        )}
                       </div>
 
                       {/* Stats grid */}
@@ -741,13 +783,32 @@ export default function AdminPage() {
                         </div>
                       )}
 
+                      {/* Offer details */}
+                      {c.offerDetails.length > 0 && (
+                        <div className="border-t border-white/[0.06] pt-2 mt-2 space-y-1.5">
+                          <p className="text-[9px] text-[#C9AB81] font-bold tracking-wider uppercase">Solicitări ofertă</p>
+                          {c.offerDetails.map((od, oi) => (
+                            <div key={oi} className="flex items-start gap-2 bg-white/[0.02] p-2">
+                              {od.photoUrl && !od.photoUrl.startsWith("[") && (
+                                <img src={od.photoUrl} alt="" className="w-10 h-10 object-cover shrink-0 border border-white/[0.08]" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                {od.message && <p className="text-[10px] text-white/50 italic">&ldquo;{od.message}&rdquo;</p>}
+                                <p className="text-[9px] text-white/20">{formatTime(od.timestamp)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Timeline */}
-                      <div className="flex justify-between text-[10px] text-white/20">
-                        <span>Prima vizită: {new Date(c.firstVisit).toLocaleDateString("ro-RO")}</span>
+                      <div className="flex justify-between text-[10px] text-white/20 mt-2">
+                        <span>Prima: {new Date(c.firstVisit).toLocaleDateString("ro-RO")}</span>
                         <span>Ultima: {new Date(c.lastVisit).toLocaleDateString("ro-RO")}</span>
                       </div>
                     </div>
-                  ));
+                  ))}
+                  </>);
                 })()}
               </>
             )}
