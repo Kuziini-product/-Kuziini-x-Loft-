@@ -237,16 +237,16 @@ export default function HomePage() {
             <Image
               src="/kuziini-logo.png"
               alt="Kuziini"
-              width={44}
-              height={44}
-              className="rounded-lg border border-white/10 invert brightness-200 object-contain"
+              width={80}
+              height={80}
+              className="rounded-xl border border-white/10 invert brightness-200 object-contain"
             />
           </a>
           <span className="text-[#C9AB81]/40 text-lg font-bold">×</span>
           <img
             src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
             alt="LOFT"
-            className="h-[44px] object-contain opacity-80"
+            className="h-[26px] object-contain opacity-80"
           />
         </div>
 
