@@ -62,8 +62,19 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 text-center px-5 w-full max-w-lg">
+          {/* Logo Kuziini */}
+          <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto mb-6 w-fit">
+            <Image
+              src="/kuziini-logo.png"
+              alt="Kuziini Furniture & More"
+              width={140}
+              height={140}
+              className="rounded-2xl shadow-2xl shadow-black/60 border border-white/10 invert brightness-200"
+            />
+          </a>
+
           {/* LOFT + Mamaia centered */}
-          <div className="mb-6">
+          <div className="mb-8">
             <img
               src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
               alt="LOFT"
@@ -73,17 +84,6 @@ export default function HomePage() {
               Mamaia
             </p>
           </div>
-
-          {/* Logo Kuziini */}
-          <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto mb-8 w-fit">
-            <Image
-              src="/kuziini-logo.png"
-              alt="Kuziini Furniture & More"
-              width={140}
-              height={140}
-              className="rounded-2xl shadow-2xl shadow-black/60 border border-white/10 invert brightness-200"
-            />
-          </a>
 
           {/* Brand names */}
           <div className="flex items-center justify-center gap-4 mb-5">
@@ -384,6 +384,7 @@ function Lightbox({
   const [formSent, setFormSent] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
   const [likes, setLikes] = useState<Record<string, { likes: number; liked: boolean }>>({});
   const [likeAnimating, setLikeAnimating] = useState<number | null>(null);
   const trackedViews = useRef<Set<number>>(new Set());
@@ -487,14 +488,14 @@ function Lightbox({
     setFormLoading(true);
     setFormError(null);
     try {
-      // Don't send base64 image data - just send a photo index reference
+      // Send selected photo indexes
       const res = await fetch("/api/offers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "submit",
           ...formData,
-          photoUrl: images[current],
+          photoIndexes: Array.from(selectedPhotos).sort((a, b) => a - b),
         }),
       });
       const json = await res.json();
@@ -548,8 +549,8 @@ function Lightbox({
         </button>
       </div>
 
-      {/* Image area */}
-      <div className="flex-1 flex items-center justify-center px-4 min-h-0 relative">
+      {/* Image area — relative so CTA can overlay on desktop */}
+      <div className="flex-1 flex items-center justify-center px-4 min-h-0 relative md:pb-0">
         {current > 0 && (
           <button
             onClick={goPrev}
@@ -595,121 +596,178 @@ function Lightbox({
             <ChevronRight className="w-5 h-5 text-white/70" />
           </button>
         )}
+
+        {/* CTA overlay — positioned at bottom of image area */}
+        {isKuziini && !showForm && !formSent && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+            <button
+              onClick={() => {
+                setSelectedPhotos(new Set([current]));
+                setShowForm(true);
+              }}
+              className="flex items-center gap-2 bg-[#C9AB81] text-[#0A0A0A] py-2 px-5 font-bold text-[11px] tracking-[0.1em] uppercase active:opacity-80 transition-opacity shadow-lg shadow-black/40"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Solicită ofertă
+            </button>
+          </div>
+        )}
+
+        {/* Success message overlay */}
+        {isKuziini && formSent && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-[90%] max-w-[360px]">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 backdrop-blur-md shadow-2xl">
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div>
+                  <p className="text-emerald-400 text-sm font-bold">Cererea a fost trimisă!</p>
+                  <p className="text-white/40 text-xs mt-0.5">Vei fi contactat în cel mai scurt timp.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setFormSent(false);
+                  setSelectedPhotos(new Set());
+                  setShowForm(true);
+                  setFormData((d) => ({ ...d, message: "" }));
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-[#C9AB81]/20 border border-[#C9AB81]/30 text-[#C9AB81] py-2 font-bold text-xs tracking-[0.1em] uppercase active:opacity-80 transition-opacity"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Solicită altă ofertă
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* CTA for Kuziini */}
-      {isKuziini && !showForm && !formSent && (
-        <div className="shrink-0 px-4 py-2">
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-full flex items-center justify-center gap-2 bg-[#C9AB81] text-[#0A0A0A] py-3 font-bold text-sm tracking-[0.1em] uppercase active:opacity-80 transition-opacity"
-          >
-            <Send className="w-4 h-4" />
-            Solicită ofertă
-          </button>
-        </div>
-      )}
-
-      {/* Offer form */}
-      {isKuziini && showForm && !formSent && (
-        <div className="shrink-0 px-4 py-3 max-h-[50vh] overflow-y-auto">
-          <div className="bg-white/[0.05] border border-white/[0.1] p-4 space-y-3">
-            <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase">
-              Solicită ofertă pentru acest produs
+      {/* Offer form — full panel below image when active, otherwise thumbnail strip */}
+      {isKuziini && showForm && !formSent ? (
+        <div className="shrink-0 max-h-[55vh] overflow-y-auto bg-black/95 border-t border-white/[0.1]">
+          {/* Scrollable photo selector */}
+          <div className="px-4 pt-3 pb-2">
+            <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-2">
+              Selectează produsele ({selectedPhotos.size} {selectedPhotos.size === 1 ? "selectat" : "selectate"})
             </p>
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+              {images.map((url, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setSelectedPhotos((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i);
+                      else next.add(i);
+                      return next;
+                    });
+                  }}
+                  className={`relative w-16 h-16 shrink-0 overflow-hidden border-2 transition-all ${
+                    selectedPhotos.has(i)
+                      ? "border-[#C9AB81] opacity-100"
+                      : "border-white/10 opacity-50"
+                  }`}
+                >
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  {selectedPhotos.has(i) && (
+                    <div className="absolute inset-0 bg-[#C9AB81]/20 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-[#C9AB81]" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected photos preview */}
+          {selectedPhotos.size > 0 && (
+            <div className="px-4 pb-2">
+              <div className="flex gap-1.5 flex-wrap">
+                {Array.from(selectedPhotos).sort((a, b) => a - b).map((idx) => (
+                  <div key={idx} className="relative w-20 h-20 border border-[#C9AB81]/30">
+                    <img src={images[idx]} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => setSelectedPhotos((prev) => { const n = new Set(prev); n.delete(idx); return n; })}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                    <span className="absolute bottom-0 left-0 bg-black/70 text-white text-[9px] px-1">#{idx + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Contact form */}
+          <div className="px-4 pb-4 space-y-2">
+            <p className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase">Date de contact</p>
             <input
               type="text"
               placeholder="Nume *"
               value={formData.name}
               onChange={(e) => setFormData((d) => ({ ...d, name: e.target.value }))}
-              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2.5 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
+              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
             />
             <input
               type="tel"
               placeholder="Telefon *"
               value={formData.phone}
               onChange={(e) => setFormData((d) => ({ ...d, phone: e.target.value }))}
-              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2.5 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
+              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
             />
             <input
               type="email"
               placeholder="Email *"
               value={formData.email}
               onChange={(e) => setFormData((d) => ({ ...d, email: e.target.value }))}
-              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2.5 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
+              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50"
             />
             <textarea
-              placeholder="Mesaj suplimentar (opțional)"
+              placeholder="Mesaj (opțional)"
               value={formData.message}
               onChange={(e) => setFormData((d) => ({ ...d, message: e.target.value }))}
               rows={2}
-              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2.5 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50 resize-none"
+              className="w-full bg-white/[0.06] border border-white/[0.1] px-3 py-2 text-white text-sm placeholder:text-white/30 outline-none focus:border-[#C9AB81]/50 resize-none"
             />
             {formError && <p className="text-red-400 text-xs">{formError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={submitOffer}
-                disabled={formLoading}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#C9AB81] text-[#0A0A0A] py-3 font-bold text-xs tracking-[0.1em] uppercase disabled:opacity-50"
+                disabled={formLoading || selectedPhotos.size === 0}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#C9AB81] text-[#0A0A0A] py-2.5 font-bold text-xs tracking-[0.1em] uppercase disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
-                {formLoading ? "Se trimite..." : "Trimite"}
+                {formLoading ? "Se trimite..." : `Trimite (${selectedPhotos.size})`}
               </button>
               <button
                 onClick={() => setShowForm(false)}
-                className="px-4 py-3 bg-white/[0.06] border border-white/[0.1] text-white/60 text-xs font-bold tracking-wider uppercase"
+                className="px-3 py-2.5 bg-white/[0.06] border border-white/[0.1] text-white/60 text-xs font-bold tracking-wider uppercase"
               >
                 Anulează
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Success message */}
-      {isKuziini && formSent && (
-        <div className="shrink-0 px-4 py-3">
-          <div className="bg-emerald-500/10 border border-emerald-500/20 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-              <div>
-                <p className="text-emerald-400 text-sm font-bold">Cererea a fost trimisă!</p>
-                <p className="text-white/40 text-xs mt-0.5">Vei fi contactat în cel mai scurt timp.</p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setFormSent(false);
-                setShowForm(true);
-                setFormData((d) => ({ ...d, message: "" }));
-              }}
-              className="w-full flex items-center justify-center gap-2 bg-[#C9AB81]/20 border border-[#C9AB81]/30 text-[#C9AB81] py-2.5 font-bold text-xs tracking-[0.1em] uppercase active:opacity-80 transition-opacity"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Solicită altă ofertă
-            </button>
+      ) : !showForm && !formSent ? (
+        /* Thumbnail strip — only when form is NOT open */
+        <div className="shrink-0 px-4 py-3 overflow-x-auto">
+          <div className="flex gap-2 justify-center">
+            {images.map((url, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`w-12 h-12 shrink-0 overflow-hidden border-2 transition-all ${
+                  i === current
+                    ? "border-[#C9AB81] opacity-100"
+                    : "border-transparent opacity-40"
+                }`}
+              >
+                <img src={url} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
           </div>
         </div>
-      )}
-
-      {/* Thumbnail strip */}
-      <div className="shrink-0 px-4 py-3 overflow-x-auto">
-        <div className="flex gap-2 justify-center">
-          {images.map((url, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`w-12 h-12 shrink-0 overflow-hidden border-2 transition-all ${
-                i === current
-                  ? "border-[#C9AB81] opacity-100"
-                  : "border-transparent opacity-40"
-              }`}
-            >
-              <img src={url} alt="" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      </div>
+      ) : null}
     </div>
   );
 }

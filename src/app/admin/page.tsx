@@ -65,6 +65,8 @@ interface OfferEntry {
   email: string;
   message: string;
   photoUrl: string;
+  photoIndex?: number;
+  photoIndexes?: number[];
   timestamp: string;
   read: boolean;
 }
@@ -540,13 +542,27 @@ export default function AdminPage() {
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    {o.photoUrl && (
-                      <img
-                        src={o.photoUrl}
-                        alt=""
-                        className="w-16 h-16 object-cover shrink-0 border border-white/[0.08]"
-                      />
-                    )}
+                    {(() => {
+                      const indexes = o.photoIndexes || (o.photoIndex !== undefined ? [o.photoIndex] : []);
+                      if (indexes.length > 0 && galleryImages.length > 0) {
+                        return (
+                          <div className="flex gap-1 shrink-0">
+                            {indexes.map((idx) => galleryImages[idx] ? (
+                              <img
+                                key={idx}
+                                src={galleryImages[idx].url}
+                                alt={`Foto #${idx + 1}`}
+                                className="w-14 h-14 object-cover border border-white/[0.08]"
+                              />
+                            ) : null)}
+                          </div>
+                        );
+                      }
+                      if (o.photoUrl) {
+                        return <img src={o.photoUrl} alt="" className="w-16 h-16 object-cover shrink-0 border border-white/[0.08]" />;
+                      }
+                      return null;
+                    })()}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <p className="font-bold text-sm text-white tracking-wide">

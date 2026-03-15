@@ -9,7 +9,9 @@ export interface OfferRequest {
   phone: string;
   email: string;
   message: string;
-  photoUrl: string;
+  photoUrl: string;       // kept for legacy offers
+  photoIndex?: number;    // legacy single index
+  photoIndexes?: number[]; // multiple selected photos
   timestamp: string;
   read: boolean;
 }
@@ -29,12 +31,12 @@ export async function POST(req: NextRequest) {
 
   // Public action: submit offer request
   if (action === "submit") {
-    const { name, phone, email, message, photoUrl } = body as {
+    const { name, phone, email, message, photoIndexes } = body as {
       name: string;
       phone: string;
       email: string;
       message: string;
-      photoUrl: string;
+      photoIndexes?: number[];
     };
 
     if (!name || !phone || !email) {
@@ -51,7 +53,8 @@ export async function POST(req: NextRequest) {
       phone: phone.trim(),
       email: email.trim(),
       message: (message || "").trim(),
-      photoUrl: photoUrl || "",
+      photoUrl: "",
+      photoIndexes: photoIndexes && photoIndexes.length > 0 ? photoIndexes : undefined,
       timestamp: new Date().toISOString(),
       read: false,
     };
@@ -117,8 +120,12 @@ async function sendEmailNotification(offer: OfferRequest) {
     return;
   }
 
-  // NOTIFY_EMAIL can be set in env vars; defaults to madalintomescu@gmail.com
   const toEmail = process.env.NOTIFY_EMAIL || "madalintomescu@gmail.com";
+
+  const indexes = offer.photoIndexes || (offer.photoIndex !== undefined ? [offer.photoIndex] : []);
+  const photoLine = indexes.length > 0
+    ? `<p style="color:#C9AB81;font-weight:bold;">📷 ${indexes.length === 1 ? "Foto" : "Foto selectate"}: ${indexes.map((i) => `#${i + 1}`).join(", ")} din galeria Kuziini</p>`
+    : "";
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -132,12 +139,13 @@ async function sendEmailNotification(offer: OfferRequest) {
       subject: `Solicitare oferta - ${offer.name}`,
       html: `
         <h2>Solicitare noua de oferta</h2>
+        ${photoLine}
         <p><strong>Nume:</strong> ${offer.name}</p>
         <p><strong>Telefon:</strong> ${offer.phone}</p>
         <p><strong>Email:</strong> ${offer.email}</p>
         ${offer.message ? `<p><strong>Mesaj:</strong> ${offer.message}</p>` : ""}
         <hr/>
-        <p style="color:#999;font-size:12px;">Trimis din aplicatia Kuziini × LOFT</p>
+        <p style="color:#999;font-size:12px;">Trimis din aplicatia Kuziini × LOFT — vezi foto in panoul admin</p>
       `,
     }),
   });
