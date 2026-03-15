@@ -36,7 +36,7 @@ export default function HomePage() {
   const { userSession } = useSessionStore();
   const [loftGallery, setLoftGallery] = useState<GalleryData | null>(null);
   const [kuziiniGallery, setKuziiniGallery] = useState<GalleryData | null>(null);
-  const [lightbox, setLightbox] = useState<{ images: string[]; index: number; isKuziini: boolean } | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number; isKuziini: boolean; category: string } | null>(null);
   const [showInstall, setShowInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
@@ -113,8 +113,8 @@ export default function HomePage() {
     }
   };
 
-  const openLightbox = useCallback((allImages: string[], clickedIndex: number, isKuziini = false) => {
-    setLightbox({ images: allImages, index: clickedIndex, isKuziini });
+  const openLightbox = useCallback((allImages: string[], clickedIndex: number, isKuziini = false, category = "kuziini") => {
+    setLightbox({ images: allImages, index: clickedIndex, isKuziini, category });
   }, []);
 
   useEffect(() => {
@@ -322,7 +322,9 @@ export default function HomePage() {
             </div>
             <ScrollableGallery
               gallery={loftGallery}
-              onImageClick={(allUrls, idx) => openLightbox(allUrls, idx)}
+              onImageClick={(allUrls, idx) => openLightbox(allUrls, idx, true, "loft")}
+              showLikes
+              category="loft"
             />
           </div>
         )}
@@ -338,8 +340,9 @@ export default function HomePage() {
             </div>
             <ScrollableGallery
               gallery={kuziiniGallery}
-              onImageClick={(allUrls, idx) => openLightbox(allUrls, idx, true)}
+              onImageClick={(allUrls, idx) => openLightbox(allUrls, idx, true, "kuziini")}
               showLikes
+              category="kuziini"
             />
           </div>
         )}
@@ -407,6 +410,7 @@ export default function HomePage() {
           images={lightbox.images}
           index={lightbox.index}
           isKuziini={lightbox.isKuziini}
+          category={lightbox.category}
           onClose={() => setLightbox(null)}
         />
       )}
@@ -418,10 +422,12 @@ function ScrollableGallery({
   gallery,
   onImageClick,
   showLikes,
+  category = "kuziini",
 }: {
   gallery: GalleryData;
   onImageClick: (allUrls: string[], idx: number) => void;
   showLikes?: boolean;
+  category?: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const allUrls = gallery.images.map((m) => m.url);
@@ -448,18 +454,19 @@ function ScrollableGallery({
           for (const [key, val] of Object.entries(newData)) {
             const oldCount = prev[key] || 0;
             if (val.likes > oldCount && oldCount > 0) {
-              const idx = parseInt(key.replace("kuziini-", ""));
+              const idx = parseInt(key.replace(`${category}-`, ""));
               const hearts = Array.from({ length: 6 }, () => {
                 burstIdRef.current++;
                 return {
                   id: burstIdRef.current,
                   x: 50 + (Math.random() - 0.5) * 70,
-                  delay: Math.random() * 0.3,
+                  delay: Math.random() * 0.8,
                   size: 12 + Math.random() * 14,
-                  duration: 1 + Math.random() * 0.6,
+                  duration: 2.5 + Math.random() * 1.5,
                 };
               });
               setBurstPhotos((p) => ({ ...p, [idx]: [...(p[idx] || []), ...hearts] }));
+              // Cleanup after longest animation
               setTimeout(() => {
                 setBurstPhotos((p) => {
                   const copy = { ...p };
@@ -469,7 +476,7 @@ function ScrollableGallery({
                   }
                   return copy;
                 });
-              }, 2500);
+              }, 5000);
             }
           }
           // Update prev ref
@@ -542,11 +549,11 @@ function ScrollableGallery({
                       ))}
                     </div>
                   )}
-                  {showLikes && (photoLikes[`kuziini-${globalIdx}`]?.likes || 0) > 0 && (
+                  {showLikes && (photoLikes[`${category}-${globalIdx}`]?.likes || 0) > 0 && (
                     <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-sm z-30">
                       <Heart className="w-3 h-3 text-red-500 fill-red-500" />
                       <span className="text-white text-[10px] font-bold">
-                        {photoLikes[`kuziini-${globalIdx}`].likes}
+                        {photoLikes[`${category}-${globalIdx}`].likes}
                       </span>
                     </div>
                   )}
@@ -582,11 +589,13 @@ function Lightbox({
   images,
   index,
   isKuziini,
+  category = "kuziini",
   onClose,
 }: {
   images: string[];
   index: number;
   isKuziini: boolean;
+  category?: string;
   onClose: () => void;
 }) {
   const [current, setCurrent] = useState(index);
@@ -688,16 +697,16 @@ function Lightbox({
       return {
         id: heartIdRef.current,
         x: 50 + (Math.random() - 0.5) * 80, // spread horizontally around center
-        delay: Math.random() * 0.4,
+        delay: Math.random() * 0.8,
         size: 14 + Math.random() * 18,
-        duration: 1.2 + Math.random() * 0.8,
+        duration: 2.5 + Math.random() * 1.5,
       };
     });
     setFloatingHearts((prev) => [...prev, ...newHearts]);
     // Clean up after animations complete
     setTimeout(() => {
       setFloatingHearts((prev) => prev.filter((h) => !newHearts.find((n) => n.id === h.id)));
-    }, 2500);
+    }, 5000);
   }
 
   async function toggleLike() {
@@ -705,7 +714,7 @@ function Lightbox({
     setLikeAnimating(current);
     setTimeout(() => setLikeAnimating(null), 600);
     // Spawn floating hearts on like (not unlike)
-    const isCurrentlyLiked = likes[`kuziini-${current}`]?.liked;
+    const isCurrentlyLiked = likes[`${category}-${current}`]?.liked;
     if (!isCurrentlyLiked) {
       spawnHearts();
     }
@@ -719,7 +728,7 @@ function Lightbox({
       if (json.success) {
         setLikes((prev) => ({
           ...prev,
-          [`kuziini-${current}`]: { likes: json.likes, liked: json.liked },
+          [`${category}-${current}`]: { likes: json.likes, liked: json.liked },
         }));
       }
     } catch { /* ignore */ }
@@ -973,14 +982,14 @@ function Lightbox({
                 >
                   <Heart
                     className={`w-5 h-5 transition-colors ${
-                      likes[`kuziini-${current}`]?.liked
+                      likes[`${category}-${current}`]?.liked
                         ? "text-red-500 fill-red-500"
                         : "text-white/70"
                     } ${likeAnimating === current ? "animate-ping-once" : ""}`}
                   />
-                  {(likes[`kuziini-${current}`]?.likes || 0) > 0 && (
+                  {(likes[`${category}-${current}`]?.likes || 0) > 0 && (
                     <span className="text-white/80 text-xs font-bold">
-                      {likes[`kuziini-${current}`].likes}
+                      {likes[`${category}-${current}`].likes}
                     </span>
                   )}
                 </button>

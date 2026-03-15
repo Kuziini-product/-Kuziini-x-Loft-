@@ -88,28 +88,32 @@ body {
     transform: translateY(0) scale(0.3);
     opacity: 0;
   }
-  10% {
+  5% {
     opacity: 1;
-    transform: translateY(-20px) scale(1);
+    transform: translateY(-10px) scale(1.1);
   }
-  50% {
-    opacity: 0.9;
+  15% {
+    transform: translateY(-40px) scale(1);
+    opacity: 1;
   }
-  80% {
-    opacity: 0.4;
+  60% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.3;
   }
   100% {
-    transform: translateY(-85vh) scale(0.6);
+    transform: translateY(-80vh) scale(0.5);
     opacity: 0;
   }
 }
 
 @keyframes heartWiggle {
   0% {
-    transform: translateX(-6px) rotate(-8deg);
+    transform: translateX(-8px) rotate(-12deg);
   }
   100% {
-    transform: translateX(6px) rotate(8deg);
+    transform: translateX(8px) rotate(12deg);
   }
 }
 
