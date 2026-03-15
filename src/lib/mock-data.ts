@@ -1849,21 +1849,13 @@ export interface GalleryImage {
 export const LOFT_GALLERY: GalleryConfig = {
   slots: 3,
   aspect: "square",
-  images: [
-    { id: "lg-1", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-featured.jpg", order: 0 },
-    { id: "lg-2", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-1-1024x684.jpg", order: 1 },
-    { id: "lg-3", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-3-1024x684.jpg", order: 2 },
-  ],
+  images: [],
 };
 
 export const KUZIINI_GALLERY: GalleryConfig = {
   slots: 3,
   aspect: "square",
-  images: [
-    { id: "kg-1", url: "https://kuziini.ro/wp-content/uploads/2025/02/IMG-20240403-WA0019.jpg", order: 0 },
-    { id: "kg-2", url: "https://kuziini.ro/wp-content/uploads/2025/02/aqua-marina-1.jpg", order: 1 },
-    { id: "kg-3", url: "https://kuziini.ro/wp-content/uploads/2025/02/Classic-Grace-1.jpg", order: 2 },
-  ],
+  images: [],
 };
 
 // ─── Photo Library ──────────────────────────────────────────────────────────
@@ -1873,17 +1865,9 @@ export interface LibraryPhoto {
   addedAt: string;
 }
 
-export const LOFT_LIBRARY: LibraryPhoto[] = [
-  { id: "ll-1", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-featured.jpg", addedAt: new Date().toISOString() },
-  { id: "ll-2", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-1-1024x684.jpg", addedAt: new Date().toISOString() },
-  { id: "ll-3", url: "https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-3-1024x684.jpg", addedAt: new Date().toISOString() },
-];
+export const LOFT_LIBRARY: LibraryPhoto[] = [];
 
-export const KUZIINI_LIBRARY: LibraryPhoto[] = [
-  { id: "kl-1", url: "https://kuziini.ro/wp-content/uploads/2025/02/IMG-20240403-WA0019.jpg", addedAt: new Date().toISOString() },
-  { id: "kl-2", url: "https://kuziini.ro/wp-content/uploads/2025/02/aqua-marina-1.jpg", addedAt: new Date().toISOString() },
-  { id: "kl-3", url: "https://kuziini.ro/wp-content/uploads/2025/02/Classic-Grace-1.jpg", addedAt: new Date().toISOString() },
-];
+export const KUZIINI_LIBRARY: LibraryPhoto[] = [];
 
 // ─── Mock Guest Requests ──────────────────────────────────────────────────────
 
