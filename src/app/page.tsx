@@ -430,14 +430,20 @@ function ScrollableGallery({
 
   useEffect(() => {
     if (!showLikes) return;
-    fetch("/api/analytics", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "getPhotoStats", sessionId: "" }),
-    })
-      .then((r) => r.json())
-      .then((j) => { if (j.success) setPhotoLikes(j.data); })
-      .catch(() => {});
+    function fetchLikes() {
+      fetch("/api/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getPhotoStats", sessionId: "" }),
+      })
+        .then((r) => r.json())
+        .then((j) => { if (j.success) setPhotoLikes(j.data); })
+        .catch(() => {});
+    }
+    fetchLikes();
+    // Poll every 10 seconds for live updates
+    const interval = setInterval(fetchLikes, 10_000);
+    return () => clearInterval(interval);
   }, [showLikes]);
 
   // Group images into pages based on slots
@@ -545,15 +551,20 @@ function Lightbox({
     }
     sessionId.current = sid;
 
-    // Fetch current like states
+    // Fetch current like states + poll every 10s for live sync
     if (isKuziini) {
-      fetch("/api/analytics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "getPhotoStats", sessionId: sid }),
-      })
-        .then((r) => r.json())
-        .then((j) => { if (j.success) setLikes(j.data); });
+      const fetchLikes = () => {
+        fetch("/api/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "getPhotoStats", sessionId: sessionId.current }),
+        })
+          .then((r) => r.json())
+          .then((j) => { if (j.success) setLikes(j.data); });
+      };
+      fetchLikes();
+      const interval = setInterval(fetchLikes, 10_000);
+      return () => clearInterval(interval);
     }
   }, [isKuziini]);
 

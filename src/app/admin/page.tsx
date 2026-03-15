@@ -252,6 +252,16 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-refresh all data every 15 seconds for live updates
+  useEffect(() => {
+    if (!authenticated) return;
+    const interval = setInterval(() => {
+      fetchData();
+    }, 15_000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, password]);
+
   async function fetchData(pw?: string) {
     setLoading(true);
     setError(null);
