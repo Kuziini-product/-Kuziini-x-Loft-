@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sleep } from "@/lib/utils";
-import { BILL_REQUESTS_LOG } from "@/lib/mock-data";
+import { BILL_REQUESTS_LOG, MOCK_UMBRELLAS, MOCK_SESSIONS } from "@/lib/mock-data";
 
 export async function POST(req: NextRequest) {
   await sleep(500);
@@ -22,7 +22,22 @@ export async function POST(req: NextRequest) {
     timestamp: new Date().toISOString(),
   });
 
-  // Notify POS — waiter will come with the bill
+  // Auto-close bill after 2 minutes (no POS connected)
+  setTimeout(() => {
+    if (MOCK_SESSIONS[sessionId]) {
+      MOCK_SESSIONS[sessionId] = {
+        ...MOCK_SESSIONS[sessionId],
+        closed: true,
+      };
+    }
+    if (MOCK_UMBRELLAS[umbrellaId]) {
+      MOCK_UMBRELLAS[umbrellaId] = {
+        ...MOCK_UMBRELLAS[umbrellaId],
+        sessionId: null,
+      };
+    }
+  }, 2 * 60 * 1000);
+
   return NextResponse.json({
     success: true,
     data: {
@@ -30,8 +45,8 @@ export async function POST(req: NextRequest) {
       umbrellaId,
       paymentMethod,
       amount,
-      status: "pending",
-      message: `Nota a fost trimisă la POS. Ospătarul vine la umbrela ${umbrellaId}.`,
+      status: "paid",
+      message: `Nota a fost înregistrată ca încasată. Mulțumim!`,
     },
   });
 }

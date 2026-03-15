@@ -38,6 +38,32 @@ export default function HomePage() {
   const [kuziiniGallery, setKuziiniGallery] = useState<GalleryData | null>(null);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number; isKuziini: boolean } | null>(null);
   const [showInstall, setShowInstall] = useState(false);
+  const deferredPromptRef = useRef<Event | null>(null);
+
+  // Capture beforeinstallprompt for native install on desktop/Android
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPromptRef.current = e;
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    const prompt = deferredPromptRef.current as (Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }) | null;
+    if (prompt) {
+      // Desktop/Android — trigger native install
+      await prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === "accepted") {
+        deferredPromptRef.current = null;
+      }
+    } else {
+      // iOS/Safari — show manual instructions
+      setShowInstall(true);
+    }
+  };
 
   const openLightbox = useCallback((allImages: string[], clickedIndex: number, isKuziini = false) => {
     setLightbox({ images: allImages, index: clickedIndex, isKuziini });
@@ -104,7 +130,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setShowInstall(true)}
+            onClick={handleInstallClick}
             className="mt-3 inline-flex items-center justify-center gap-2 text-white/50 text-xs tracking-[0.1em] uppercase hover:text-white/80 transition-colors py-2"
           >
             <Download className="w-3.5 h-3.5" />

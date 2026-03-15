@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, CreditCard, Banknote, Hotel, CheckCircle2, AlertCircle, ChevronRight, Clock } from "lucide-react";
+import { ArrowLeft, CreditCard, Banknote, Hotel, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
 import { PageHeader, Button, EmptyState, Divider, Spinner } from "@/components/ui";
 import { useSessionStore } from "@/store";
 import { formatPrice } from "@/lib/utils";
@@ -64,33 +64,34 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
   if (done) {
     return (
       <div className="min-h-dvh bg-[#0A0A0A] flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-20 h-20 flex items-center justify-center mb-6 bg-[#C9AB81]/20 border border-[#C9AB81]/30">
-          <Clock className="w-10 h-10 text-[#C9AB81]" />
+        <div className="w-20 h-20 flex items-center justify-center mb-6 bg-emerald-500/20 border border-emerald-500/30">
+          <CheckCircle2 className="w-10 h-10 text-emerald-400" />
         </div>
         <h2 className="text-3xl font-bold text-white mb-3 tracking-wide">
-          Nota a fost trimisă!
+          Nota a fost încasată!
         </h2>
         <p className="text-white/40 text-sm mb-4">
           {selectedMethod === "room-charge"
-            ? `Suma de ${formatPrice(total)} va fi adăugată la camera ta.`
-            : `Total de plată: ${formatPrice(total)} · ${selectedMethod === "cash" ? "Cash" : "Card"}`}
+            ? `Suma de ${formatPrice(total)} a fost adăugată la camera ta.`
+            : `Total plătit: ${formatPrice(total)} · ${selectedMethod === "cash" ? "Cash" : "Card"}`}
         </p>
-        <div className="bg-[#C9AB81]/10 border border-[#C9AB81]/20 px-5 py-4 mb-2">
-          <p className="text-[#C9AB81] text-sm font-bold tracking-wide mb-1">
-            🛎️ Ospătarul vine cu nota în curând
+        <div className="bg-emerald-500/10 border border-emerald-500/20 px-5 py-4 mb-2">
+          <p className="text-emerald-400 text-sm font-bold tracking-wide mb-1">
+            Plata a fost confirmată
           </p>
           <p className="text-white/30 text-xs">
-            Umbrela {umbrellaId} · Te rugăm să aștepți la șezlong
+            Umbrela {umbrellaId} · Sesiunea se va închide automat
           </p>
         </div>
         <p className="text-white/30 text-sm mb-8">
           Mulțumim că ai ales LOFT
         </p>
-        <div className="bg-white/[0.03] border border-white/[0.06] px-5 py-3">
-          <p className="text-white/30 text-xs">
-            Pentru a comanda din nou, prezintă-te la recepție pentru înregistrare.
-          </p>
-        </div>
+        <Link
+          href="/"
+          className="bg-[#C9AB81] text-[#0A0A0A] px-6 py-3 font-bold text-sm tracking-[0.1em] uppercase"
+        >
+          Înapoi la pagina principală
+        </Link>
       </div>
     );
   }
