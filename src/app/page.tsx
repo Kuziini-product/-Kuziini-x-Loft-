@@ -427,21 +427,60 @@ function ScrollableGallery({
   const allUrls = gallery.images.map((m) => m.url);
   const aspectClass = getAspectClass(gallery.aspect);
   const [photoLikes, setPhotoLikes] = useState<Record<string, { likes: number }>>({});
+  const prevLikesRef = useRef<Record<string, number>>({});
+  const [burstPhotos, setBurstPhotos] = useState<Record<number, { id: number; x: number; delay: number; size: number; duration: number }[]>>({});
+  const burstIdRef = useRef(0);
 
   useEffect(() => {
     if (!showLikes) return;
-    function fetchLikes() {
+    const fetchLikes = () => {
       fetch("/api/analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "getPhotoStats", sessionId: "" }),
       })
         .then((r) => r.json())
-        .then((j) => { if (j.success) setPhotoLikes(j.data); })
+        .then((j) => {
+          if (!j.success) return;
+          // Detect new likes and trigger heart burst
+          const newData = j.data as Record<string, { likes: number }>;
+          const prev = prevLikesRef.current;
+          for (const [key, val] of Object.entries(newData)) {
+            const oldCount = prev[key] || 0;
+            if (val.likes > oldCount && oldCount > 0) {
+              const idx = parseInt(key.replace("kuziini-", ""));
+              const hearts = Array.from({ length: 6 }, () => {
+                burstIdRef.current++;
+                return {
+                  id: burstIdRef.current,
+                  x: 50 + (Math.random() - 0.5) * 70,
+                  delay: Math.random() * 0.3,
+                  size: 12 + Math.random() * 14,
+                  duration: 1 + Math.random() * 0.6,
+                };
+              });
+              setBurstPhotos((p) => ({ ...p, [idx]: [...(p[idx] || []), ...hearts] }));
+              setTimeout(() => {
+                setBurstPhotos((p) => {
+                  const copy = { ...p };
+                  if (copy[idx]) {
+                    copy[idx] = copy[idx].filter((h) => !hearts.find((n) => n.id === h.id));
+                    if (copy[idx].length === 0) delete copy[idx];
+                  }
+                  return copy;
+                });
+              }, 2500);
+            }
+          }
+          // Update prev ref
+          const nextPrev: Record<string, number> = {};
+          for (const [k, v] of Object.entries(newData)) nextPrev[k] = v.likes;
+          prevLikesRef.current = nextPrev;
+          setPhotoLikes(newData);
+        })
         .catch(() => {});
-    }
+    };
     fetchLikes();
-    // Poll every 10 seconds for live updates
     const interval = setInterval(fetchLikes, 10_000);
     return () => clearInterval(interval);
   }, [showLikes]);
@@ -478,8 +517,33 @@ function ScrollableGallery({
                     loading="lazy"
                     className="w-full h-full object-cover"
                   />
+                  {/* Floating hearts burst on this photo */}
+                  {burstPhotos[globalIdx] && burstPhotos[globalIdx].length > 0 && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+                      {burstPhotos[globalIdx].map((h) => (
+                        <div
+                          key={h.id}
+                          className="absolute"
+                          style={{
+                            left: `${h.x}%`,
+                            bottom: 0,
+                            animation: `floatHeart ${h.duration}s ease-out ${h.delay}s both`,
+                          }}
+                        >
+                          <Heart
+                            className="text-red-500 fill-red-500 drop-shadow-lg"
+                            style={{
+                              width: h.size,
+                              height: h.size,
+                              animation: `heartWiggle ${0.3 + Math.random() * 0.3}s ease-in-out ${h.delay}s infinite alternate`,
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {showLikes && (photoLikes[`kuziini-${globalIdx}`]?.likes || 0) > 0 && (
-                    <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-sm">
+                    <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-sm z-30">
                       <Heart className="w-3 h-3 text-red-500 fill-red-500" />
                       <span className="text-white text-[10px] font-bold">
                         {photoLikes[`kuziini-${globalIdx}`].likes}
