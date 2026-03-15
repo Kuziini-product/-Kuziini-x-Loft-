@@ -32,7 +32,7 @@ export function InstallPrompt() {
 
     // Check if dismissed recently
     const dismissedAt = localStorage.getItem("kuziini_install_dismissed");
-    if (dismissedAt && Date.now() - Number(dismissedAt) < 7 * 24 * 60 * 60 * 1000) {
+    if (dismissedAt && Date.now() - Number(dismissedAt) < 24 * 60 * 60 * 1000) {
       setDismissed(true);
       return;
     }
