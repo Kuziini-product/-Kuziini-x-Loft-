@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, CreditCard, Banknote, Hotel, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
-import { PageHeader, Button, EmptyState, Divider, Spinner } from "@/components/ui";
+import { PageHeader, EmptyState, Divider, Spinner } from "@/components/ui";
 import { useSessionStore } from "@/store";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
   const { umbrellaId } = params;
   const { userSession, orders } = useSessionStore();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -175,8 +176,17 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
                 description="Plată în numerar la livrare"
                 value="cash"
                 selected={selectedMethod === "cash"}
+                confirming={selectedMethod === "cash" && confirming}
+                loading={selectedMethod === "cash" && loading}
                 available={payOpts?.cash ?? true}
-                onSelect={() => setSelectedMethod("cash")}
+                onSelect={() => {
+                  if (selectedMethod === "cash" && confirming) {
+                    handleClose();
+                  } else {
+                    setSelectedMethod("cash");
+                    setConfirming(true);
+                  }
+                }}
               />
               <PaymentOption
                 icon={<CreditCard className="w-5 h-5" />}
@@ -184,8 +194,17 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
                 description="Visa, Mastercard, contactless"
                 value="card"
                 selected={selectedMethod === "card"}
+                confirming={selectedMethod === "card" && confirming}
+                loading={selectedMethod === "card" && loading}
                 available={payOpts?.card ?? true}
-                onSelect={() => setSelectedMethod("card")}
+                onSelect={() => {
+                  if (selectedMethod === "card" && confirming) {
+                    handleClose();
+                  } else {
+                    setSelectedMethod("card");
+                    setConfirming(true);
+                  }
+                }}
               />
               <PaymentOption
                 icon={<Hotel className="w-5 h-5" />}
@@ -197,6 +216,8 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
                 }
                 value="room-charge"
                 selected={selectedMethod === "room-charge"}
+                confirming={selectedMethod === "room-charge" && confirming}
+                loading={selectedMethod === "room-charge" && loading}
                 available={payOpts?.roomCharge ?? false}
                 disabled={
                   !payOpts?.roomCharge ||
@@ -209,7 +230,14 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
                     ? `Limită depășită. Disponibil: ${formatPrice(payOpts.creditStatus.limitAvailable)}`
                     : undefined
                 }
-                onSelect={() => setSelectedMethod("room-charge")}
+                onSelect={() => {
+                  if (selectedMethod === "room-charge" && confirming) {
+                    handleClose();
+                  } else {
+                    setSelectedMethod("room-charge");
+                    setConfirming(true);
+                  }
+                }}
               />
             </div>
           )}
@@ -249,24 +277,14 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
           </div>
         )}
 
-        <Button
-          fullWidth
-          size="lg"
-          disabled={!selectedMethod || myOrders.length === 0}
-          loading={loading}
-          onClick={handleClose}
-        >
-          {selectedMethod
-            ? `Plătesc cu ${selectedMethod === "cash" ? "Cash" : selectedMethod === "card" ? "Card" : "Room Charge"}`
-            : "Selectează metoda de plată"}
-        </Button>
+{/* Button removed - payment confirms directly on method selection */}
       </div>
     </div>
   );
 }
 
 function PaymentOption({
-  icon, label, description, value, selected, available, disabled, disabledReason, onSelect,
+  icon, label, description, selected, available, confirming, loading: isLoading, disabled, disabledReason, onSelect,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -274,34 +292,59 @@ function PaymentOption({
   value: PaymentMethod;
   selected: boolean;
   available: boolean;
+  confirming?: boolean;
+  loading?: boolean;
   disabled?: boolean;
   disabledReason?: string;
   onSelect: () => void;
 }) {
-  const isDisabled = disabled || !available;
+  const isDisabled = (disabled || !available) && !confirming;
+  const isConfirming = selected && confirming;
 
   return (
     <div>
       <button
-        disabled={isDisabled}
+        disabled={isDisabled || isLoading}
         onClick={onSelect}
         className={cn(
           "w-full flex items-center gap-4 p-4 border transition-all text-left",
-          selected ? "border-[#C9AB81] bg-[#C9AB81]/10" : "border-white/[0.06] bg-white/[0.03]",
+          isConfirming
+            ? "border-emerald-500 bg-emerald-500/15 animate-pulse-subtle"
+            : selected
+            ? "border-[#C9AB81] bg-[#C9AB81]/10"
+            : "border-white/[0.06] bg-white/[0.03]",
           isDisabled && "opacity-50 cursor-not-allowed"
         )}
       >
         <div className={cn(
-          "w-11 h-11 flex items-center justify-center",
-          selected ? "bg-[#C9AB81] text-[#0A0A0A]" : "bg-white/10 text-white/50"
+          "w-11 h-11 flex items-center justify-center transition-colors",
+          isConfirming
+            ? "bg-emerald-500 text-white"
+            : selected
+            ? "bg-[#C9AB81] text-[#0A0A0A]"
+            : "bg-white/10 text-white/50"
         )}>
-          {icon}
+          {isLoading ? <Spinner /> : icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-white text-sm tracking-wide">{label}</p>
-          <p className="text-xs text-white/30 truncate">{description}</p>
+          {isConfirming ? (
+            <>
+              <p className="font-bold text-emerald-400 text-sm tracking-wide">
+                Confirmă plata cu {label}?
+              </p>
+              <p className="text-xs text-emerald-400/60">
+                Apasă din nou pentru a confirma
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-bold text-white text-sm tracking-wide">{label}</p>
+              <p className="text-xs text-white/30 truncate">{description}</p>
+            </>
+          )}
         </div>
-        {selected && <CheckCircle2 className="w-5 h-5 text-[#C9AB81] shrink-0" />}
+        {isConfirming && <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />}
+        {selected && !isConfirming && <CheckCircle2 className="w-5 h-5 text-[#C9AB81] shrink-0" />}
         {!selected && !isDisabled && <ChevronRight className="w-4 h-4 text-white/20 shrink-0" />}
       </button>
       {isDisabled && disabledReason && (
