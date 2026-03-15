@@ -251,7 +251,7 @@ export default function HomePage() {
             &copy; 2026 Kuziini x LOFT. Toate drepturile rezervate.
           </p>
           <p className="text-[#0A0A0A] text-[15px] text-center tracking-wider font-medium">
-            Kuziini Furniture Luxuri and More.
+            Kuziini Furniture Luxyri and More.
           </p>
         </div>
       </div>

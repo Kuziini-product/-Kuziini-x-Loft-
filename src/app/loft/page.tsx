@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Lock, RefreshCw, ImageIcon, QrCode, Plus, Trash2, Download, Printer, LayoutGrid } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { PromoBanner } from "@/types";
@@ -14,6 +14,26 @@ type Tab = "banners" | "qrcodes" | "gallery";
 interface UmbrellaQR {
   id: string;
   zone: string;
+}
+
+const SESSION_KEY = "kuziini_loft_session";
+const SESSION_HOURS = 12;
+
+function getSavedSession(): string | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const { password: pw, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > SESSION_HOURS * 60 * 60 * 1000) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return pw;
+  } catch { return null; }
+}
+
+function saveSession(pw: string) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ password: pw, timestamp: Date.now() }));
 }
 
 export default function LoftPage() {
@@ -39,6 +59,49 @@ export default function LoftPage() {
   const [newId, setNewId] = useState("");
   const [newZone, setNewZone] = useState("Zona Lounge");
   const printRef = useRef<HTMLDivElement>(null);
+  const autoLoginDone = useRef(false);
+
+  useEffect(() => {
+    if (autoLoginDone.current) return;
+    autoLoginDone.current = true;
+    const saved = getSavedSession();
+    if (saved) {
+      setPassword(saved);
+      // Auto-login with saved password
+      (async () => {
+        setLoading(true);
+        try {
+          const res = await fetch("/api/banners", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: saved, category: "loft", action: "list" }),
+          });
+          const json = await res.json();
+          if (json.success) {
+            setBanners(json.data);
+            setStoredPassword(saved);
+            setAuthenticated(true);
+            fetch("/api/gallery", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password: saved, category: "loft", action: "get" }),
+            })
+              .then((r) => r.json())
+              .then((j) => {
+                if (j.success) {
+                  setGallerySlots(j.data.slots);
+                  if (j.data.aspect) setGalleryAspect(j.data.aspect);
+                  setGalleryImages(j.data.images);
+                  if (j.data.library) setGalleryLibrary(j.data.library);
+                }
+              });
+          }
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, []);
 
   async function handleLogin() {
     if (!password.trim()) {
@@ -58,6 +121,7 @@ export default function LoftPage() {
       setBanners(json.data);
       setStoredPassword(password);
       setAuthenticated(true);
+      saveSession(password);
       // Fetch gallery
       fetch("/api/gallery", {
         method: "POST",

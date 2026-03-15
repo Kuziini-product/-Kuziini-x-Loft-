@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Lock, Users, ShoppingBag, Receipt, DollarSign, RefreshCw, Umbrella, ImageIcon, LayoutGrid, FileText, Eye, Trash2, Heart, BarChart3, ArrowUpDown } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { PromoBanner } from "@/types";
@@ -108,6 +108,26 @@ type ClientFilter = "all" | "receptie" | "oferta";
 
 type Tab = "overview" | "logins" | "orders" | "bills" | "umbrellas" | "banners" | "gallery" | "offers" | "clients";
 
+const SESSION_KEY = "kuziini_admin_session";
+const SESSION_HOURS = 12;
+
+function getSavedSession(): string | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const { password: pw, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > SESSION_HOURS * 60 * 60 * 1000) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return pw;
+  } catch { return null; }
+}
+
+function saveSession(pw: string) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ password: pw, timestamp: Date.now() }));
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -125,6 +145,18 @@ export default function AdminPage() {
   const [clientSort, setClientSort] = useState<ClientSort>("spent");
   const [clientSearch, setClientSearch] = useState("");
   const [clientFilter, setClientFilter] = useState<ClientFilter>("all");
+  const autoLoginDone = useRef(false);
+
+  useEffect(() => {
+    if (autoLoginDone.current) return;
+    autoLoginDone.current = true;
+    const saved = getSavedSession();
+    if (saved) {
+      setPassword(saved);
+      fetchData(saved);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function fetchData(pw?: string) {
     setLoading(true);
@@ -139,6 +171,7 @@ export default function AdminPage() {
       if (!json.success) throw new Error(json.error);
       setData(json.data);
       setAuthenticated(true);
+      saveSession(pw || password);
       // Fetch Kuziini banners
       const bRes = await fetch("/api/banners", {
         method: "POST",
