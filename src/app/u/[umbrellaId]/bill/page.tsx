@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CreditCard, Banknote, Hotel, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
 import { PageHeader, EmptyState, Divider, Spinner } from "@/components/ui";
@@ -19,7 +20,8 @@ async function fetchPaymentOptions(umbrellaId: string) {
 
 export default function BillPage({ params }: { params: { umbrellaId: string } }) {
   const { umbrellaId } = params;
-  const { userSession, orders } = useSessionStore();
+  const router = useRouter();
+  const { userSession, orders, clearSession } = useSessionStore();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -87,12 +89,15 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
         <p className="text-white/30 text-sm mb-8">
           Mulțumim că ai ales LOFT
         </p>
-        <Link
-          href="/"
+        <button
+          onClick={() => {
+            clearSession();
+            router.push("/");
+          }}
           className="bg-[#C9AB81] text-[#0A0A0A] px-6 py-3 font-bold text-sm tracking-[0.1em] uppercase"
         >
           Înapoi la pagina principală
-        </Link>
+        </button>
       </div>
     );
   }
