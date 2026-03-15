@@ -213,7 +213,7 @@ export default function HomePage() {
               className="rounded-2xl border border-white/10 invert brightness-200 object-contain"
             />
           </a>
-          <span className="text-[#C9AB81]/40 text-lg font-bold">×</span>
+          <span className="text-[#C9AB81]/40 text-lg font-bold">x</span>
           <img
             src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
             alt="LOFT"
