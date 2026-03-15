@@ -141,15 +141,26 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
             </div>
           </div>
         ) : (
-          <div className="bg-white/[0.03] border border-white/[0.06] p-4 text-center">
-            <p className="text-white/40 text-sm">
-              Nu ai comenzi active pe această sesiune.
+          <div className="bg-amber-500/10 border border-amber-500/30 p-5 text-center">
+            <AlertCircle className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+            <p className="text-amber-400 font-bold text-sm mb-1">
+              Nu ai produse în comandă!
             </p>
+            <p className="text-white/40 text-xs mb-4">
+              Adaugă produse din meniu înainte de a solicita nota.
+            </p>
+            <Link
+              href={`/u/${umbrellaId}`}
+              className="inline-flex items-center gap-2 bg-[#C9AB81] text-[#0A0A0A] px-5 py-2.5 font-bold text-xs tracking-[0.1em] uppercase"
+            >
+              Înapoi la meniu
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         )}
 
-        {/* Payment methods */}
-        <div>
+        {/* Payment methods - only show when there are orders */}
+        {myOrders.length > 0 && <div>
           <h3 className="text-[#C9AB81] text-xs font-bold tracking-[0.2em] uppercase mb-3">
             Metodă de plată
           </h3>
@@ -202,7 +213,7 @@ export default function BillPage({ params }: { params: { umbrellaId: string } })
               />
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Credit info */}
         {payOpts?.creditStatus?.eligible && (
