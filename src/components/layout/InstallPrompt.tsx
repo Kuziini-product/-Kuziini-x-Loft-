@@ -7,6 +7,15 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+// Capture the event globally in case it fires before React mounts
+let savedPrompt: BeforeInstallPromptEvent | null = null;
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    savedPrompt = e as BeforeInstallPromptEvent;
+  });
+}
+
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -17,7 +26,8 @@ export function InstallPrompt() {
     // Check if already installed (standalone mode)
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      ("standalone" in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone === true);
+      ("standalone" in window.navigator &&
+        (window.navigator as unknown as { standalone: boolean }).standalone === true);
     if (isStandalone) return;
 
     // Check if dismissed recently
@@ -27,20 +37,29 @@ export function InstallPrompt() {
       return;
     }
 
-    // iOS detection — covers iPhone, iPad, iPod
+    // iOS detection
     const ua = window.navigator.userAgent.toLowerCase();
-    const isApple = /iphone|ipad|ipod/.test(ua) || (ua.includes("macintosh") && "ontouchend" in document);
+    const isApple =
+      /iphone|ipad|ipod/.test(ua) ||
+      (ua.includes("macintosh") && "ontouchend" in document);
     setIsIos(isApple);
 
     if (isApple) {
-      // On iOS, always show the banner with instructions
       setShowBanner(true);
     }
 
-    // Android/Chrome install prompt
+    // Check if we already captured the prompt before React mounted
+    if (savedPrompt) {
+      setDeferredPrompt(savedPrompt);
+      setShowBanner(true);
+    }
+
+    // Listen for future prompts (in case it hasn't fired yet)
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const evt = e as BeforeInstallPromptEvent;
+      savedPrompt = evt;
+      setDeferredPrompt(evt);
       setShowBanner(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
@@ -55,6 +74,7 @@ export function InstallPrompt() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === "accepted") {
         setShowBanner(false);
+        savedPrompt = null;
       }
     }
   };
