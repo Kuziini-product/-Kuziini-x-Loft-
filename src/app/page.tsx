@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, ChevronLeft, MapPin, Phone, Mail, AtSign, X, Send, CheckCircle, Heart } from "lucide-react";
 import type { GalleryImage, GalleryAspect } from "@/lib/mock-data";
@@ -78,7 +77,7 @@ export default function HomePage() {
 
             {/* Logo Kuziini */}
             <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto w-fit">
-              <Image
+              <img
                 src="/kuziini-logo.png"
                 alt="Kuziini Furniture & More"
                 width={140}
@@ -196,7 +195,7 @@ export default function HomePage() {
       <footer className="py-12 px-5 border-t border-white/[0.06]">
         <div className="flex items-center justify-center gap-4 mb-6">
           <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer">
-            <Image
+            <img
               src="/kuziini-logo.png"
               alt="Kuziini"
               width={136}
