@@ -237,9 +237,9 @@ export default function HomePage() {
             <Image
               src="/kuziini-logo.png"
               alt="Kuziini"
-              width={80}
-              height={80}
-              className="rounded-xl border border-white/10 invert brightness-200 object-contain"
+              width={136}
+              height={136}
+              className="rounded-2xl border border-white/10 invert brightness-200 object-contain"
             />
           </a>
           <span className="text-[#C9AB81]/40 text-lg font-bold">×</span>
