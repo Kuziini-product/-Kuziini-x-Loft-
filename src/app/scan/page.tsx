@@ -16,10 +16,14 @@ export default function ScanPage() {
 
   // After hydration, check if user already has a session (zustand persist)
   useEffect(() => {
-    if (userSession) {
+    if (userSession?.umbrellaId) {
+      // Already registered — go directly to menu
+      router.push(`/u/${userSession.umbrellaId}`);
+    } else if (userSession) {
+      // Has auth data but no umbrella — skip to scan step
       setStep("scan");
     }
-  }, [userSession]);
+  }, [userSession, router]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+40");
   const [error, setError] = useState<string | null>(null);

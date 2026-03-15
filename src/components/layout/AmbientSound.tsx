@@ -17,12 +17,14 @@ export function AmbientSound() {
     audio.setAttribute("playsinline", "true");
     audioRef.current = audio;
 
+    // Show the button immediately so users can tap to unmute
+    setVisible(true);
+
     const tryPlay = () => {
       if (startedRef.current) return;
       audio.play().then(() => {
         startedRef.current = true;
         setPlaying(true);
-        setVisible(true);
         // Remove listeners after success
         document.removeEventListener("click", tryPlay, true);
         document.removeEventListener("touchstart", tryPlay, true);
@@ -31,6 +33,10 @@ export function AmbientSound() {
       });
     };
 
+    // Try autoplay immediately (works on some desktop browsers)
+    tryPlay();
+
+    // Also listen for first interaction as fallback
     document.addEventListener("click", tryPlay, true);
     document.addEventListener("touchstart", tryPlay, true);
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronRight, ChevronLeft, MapPin, Phone, Mail, AtSign, X, Send, CheckCircle, Heart, Download, Share } from "lucide-react";
+import { useSessionStore } from "@/store";
 import type { GalleryImage, GalleryAspect } from "@/lib/mock-data";
 
 interface GalleryData {
@@ -31,6 +32,8 @@ function getAspectClass(aspect: GalleryAspect): string {
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const { userSession } = useSessionStore();
   const [loftGallery, setLoftGallery] = useState<GalleryData | null>(null);
   const [kuziiniGallery, setKuziiniGallery] = useState<GalleryData | null>(null);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number; isKuziini: boolean } | null>(null);
@@ -54,7 +57,7 @@ export default function HomePage() {
       <section className="relative h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://loftlounge.ro/wp-content/uploads/2025/07/loft-mamaia-featured.jpg"
+            src="/hero-bg.jpg"
             alt="LOFT Mamaia"
             className="w-full h-full object-cover"
           />
@@ -86,13 +89,19 @@ export default function HomePage() {
             </a>
           </div>
 
-          <Link
-            href="/scan"
+          <button
+            onClick={() => {
+              if (userSession?.umbrellaId) {
+                router.push(`/u/${userSession.umbrellaId}`);
+              } else {
+                router.push("/scan");
+              }
+            }}
             className="inline-flex items-center justify-center gap-2 bg-[#C9AB81] text-[#0A0A0A] px-8 py-3.5 font-bold text-sm tracking-[0.15em] uppercase transition-all active:opacity-80"
           >
-            Scanează QR & Comandă
+            {userSession?.umbrellaId ? "Deschide meniul" : "Scanează QR & Comandă"}
             <ChevronRight className="w-4 h-4" />
-          </Link>
+          </button>
 
           <button
             onClick={() => setShowInstall(true)}
@@ -191,27 +200,18 @@ export default function HomePage() {
           <div className="w-12 h-px bg-[#C9AB81]/40 mx-auto mt-3" />
         </div>
 
-        <div className="max-w-md mx-auto text-center mb-10">
-          <p className="text-white/40 text-sm leading-relaxed mb-4">
-            <strong className="text-white/70">Kuziini</strong> — inovație, rafinament și design sofisticat.
-            Mobilier premium, interioare personalizate.
-          </p>
-          <p className="text-white/40 text-sm leading-relaxed">
-            <strong className="text-white/70">LOFT</strong> — primul day party din România.
-            10 ani de gastronomie, băuturi craft și entertainment 360°.
-          </p>
-        </div>
-
         {/* LOFT Gallery */}
         {loftGallery && loftGallery.images.length > 0 && (
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-start gap-3 mb-4">
               <img
                 src="/loft-logo.png"
                 alt="LOFT"
-                className="h-5 object-contain opacity-60"
+                className="h-5 object-contain opacity-60 mt-0.5 shrink-0"
               />
-              <div className="flex-1 h-px bg-white/[0.06]" />
+              <p className="text-white/40 text-sm leading-relaxed">
+                — primul day party din România. 10 ani de gastronomie, băuturi craft și entertainment 360°.
+              </p>
             </div>
             <ScrollableGallery
               gallery={loftGallery}
@@ -223,9 +223,11 @@ export default function HomePage() {
         {/* Kuziini Gallery */}
         {kuziiniGallery && kuziiniGallery.images.length > 0 && (
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-sm font-bold tracking-[0.15em] uppercase text-white/60">Kuziini</span>
-              <div className="flex-1 h-px bg-white/[0.06]" />
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-sm font-bold tracking-[0.15em] uppercase text-white/60 shrink-0 mt-0.5">Kuziini</span>
+              <p className="text-white/40 text-sm leading-relaxed">
+                — inovație, rafinament și design sofisticat. Mobilier premium, interioare personalizate.
+              </p>
             </div>
             <ScrollableGallery
               gallery={kuziiniGallery}
