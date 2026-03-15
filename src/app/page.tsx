@@ -399,13 +399,14 @@ function Lightbox({
     setFormLoading(true);
     setFormError(null);
     try {
+      // Don't send base64 image data - just send a photo index reference
       const res = await fetch("/api/offers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "submit",
           ...formData,
-          photoUrl: images[current],
+          photoUrl: `[Kuziini gallery photo ${current + 1}]`,
         }),
       });
       const json = await res.json();
