@@ -111,14 +111,16 @@ export async function POST(req: NextRequest) {
 }
 
 async function sendEmailNotification(offer: OfferRequest) {
-  // Use Resend if configured, otherwise skip
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     console.log("[Offers] RESEND_API_KEY not set, skipping email");
     return;
   }
 
-  await fetch("https://api.resend.com/emails", {
+  // NOTIFY_EMAIL can be set in env vars; defaults to my@kuziini.ro
+  const toEmail = process.env.NOTIFY_EMAIL || "my@kuziini.ro";
+
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${resendKey}`,
@@ -126,7 +128,7 @@ async function sendEmailNotification(offer: OfferRequest) {
     },
     body: JSON.stringify({
       from: "Kuziini App <onboarding@resend.dev>",
-      to: "my@kuziini.ro",
+      to: toEmail,
       subject: `Solicitare oferta - ${offer.name}`,
       html: `
         <h2>Solicitare noua de oferta</h2>
@@ -134,10 +136,16 @@ async function sendEmailNotification(offer: OfferRequest) {
         <p><strong>Telefon:</strong> ${offer.phone}</p>
         <p><strong>Email:</strong> ${offer.email}</p>
         ${offer.message ? `<p><strong>Mesaj:</strong> ${offer.message}</p>` : ""}
-        ${offer.photoUrl ? `<p><strong>Produs:</strong><br/><img src="${offer.photoUrl}" style="max-width:400px;border-radius:8px;" /></p>` : ""}
         <hr/>
         <p style="color:#999;font-size:12px;">Trimis din aplicatia Kuziini × LOFT</p>
       `,
     }),
   });
+
+  const result = await res.json();
+  if (!res.ok) {
+    console.error("[Offers] Resend API error:", JSON.stringify(result));
+  } else {
+    console.log("[Offers] Email sent successfully to", toEmail, "id:", result.id);
+  }
 }
