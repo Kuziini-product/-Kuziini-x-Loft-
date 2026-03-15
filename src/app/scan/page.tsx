@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, User, Camera, ImageIcon, QrCode, ArrowLeft } from "lucide-react";
+import { Phone, User, Mail, Camera, ImageIcon, QrCode, ArrowLeft } from "lucide-react";
 import { useSessionStore } from "@/store";
 import jsQR from "jsqr";
 import Link from "next/link";
@@ -26,6 +26,7 @@ export default function ScanPage() {
   }, [userSession, router]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+40");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,17 +44,29 @@ export default function ScanPage() {
       setError("Introdu un număr de telefon valid.");
       return;
     }
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Introdu o adresă de email validă.");
+      return;
+    }
     setError(null);
     // Save auth data temporarily in session store
     setUserSession({
       phone: cleaned,
       name: trimmedName,
+      email: trimmedEmail,
       role: "owner",
       sessionId: "",
       umbrellaId: "",
       isRegistered: true,
       joinedAt: new Date().toISOString(),
     });
+    // Also save to localStorage for offer form auto-fill
+    localStorage.setItem("kuziini_contact", JSON.stringify({
+      name: trimmedName,
+      phone: cleaned,
+      email: trimmedEmail,
+    }));
     setStep("scan");
   }
 
@@ -87,6 +100,7 @@ export default function ScanPage() {
       setUserSession({
         phone: json.data.phone,
         name: userSession?.name || "",
+        email: userSession?.email || "",
         role: json.data.role,
         sessionId: json.data.sessionId,
         umbrellaId: json.data.umbrellaId,
@@ -203,13 +217,31 @@ export default function ScanPage() {
                   className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-white/20"
                   placeholder="+40 7XX XXX XXX"
                   inputMode="tel"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-[10px] font-bold text-[#C9AB81] uppercase tracking-[0.2em] mb-2 block">
+                Email
+              </label>
+              <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-3 focus-within:border-[#C9AB81]/50 transition-colors">
+                <Mail className="w-4 h-4 text-white/30 shrink-0" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-white/20"
+                  placeholder="email@exemplu.com"
+                  inputMode="email"
                   onKeyDown={(e) => e.key === "Enter" && handleAuth()}
                 />
               </div>
             </div>
 
             <p className="text-white/20 text-[10px] leading-relaxed">
-              Numărul tău de telefon a fost înregistrat la recepție.
+              Datele tale vor fi folosite pentru a primi oferte personalizate.
             </p>
 
             {error && <p className="text-red-400 text-xs">{error}</p>}

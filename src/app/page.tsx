@@ -162,7 +162,7 @@ export default function HomePage() {
         <div className="max-w-md mx-auto space-y-4">
           {/* Featured Ad */}
           <div className="relative overflow-hidden border border-[#C9AB81]/20">
-            <div className="bg-gradient-to-br from-[#C9AB81]/10 to-transparent p-6">
+            <div className="bg-gradient-to-br from-[#C9AB81]/10 to-transparent p-6 text-center">
               <p className="text-[10px] font-bold text-[#C9AB81]/60 tracking-[0.3em] uppercase mb-2">
                 Sponsor
               </p>
