@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, MapPin, Phone, Mail, AtSign } from "lucide-react";
+import { ChevronRight, ChevronLeft, MapPin, Phone, Mail, AtSign, X } from "lucide-react";
 import type { GalleryImage, GalleryAspect } from "@/lib/mock-data";
 
 interface GalleryData {
@@ -34,6 +34,11 @@ function getAspectClass(aspect: GalleryAspect): string {
 export default function HomePage() {
   const [loftGallery, setLoftGallery] = useState<GalleryData | null>(null);
   const [kuziiniGallery, setKuziiniGallery] = useState<GalleryData | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+
+  const openLightbox = useCallback((allImages: string[], clickedIndex: number) => {
+    setLightbox({ images: allImages, index: clickedIndex });
+  }, []);
 
   useEffect(() => {
     fetch("/api/gallery?category=loft")
@@ -180,10 +185,11 @@ export default function HomePage() {
               <div className="flex-1 h-px bg-white/[0.06]" />
             </div>
             <div className={`grid ${getGridCols(loftGallery.slots)} gap-1.5`}>
-              {loftGallery.images.slice(0, loftGallery.slots).map((img) => (
+              {loftGallery.images.slice(0, loftGallery.slots).map((img, i) => (
                 <div
                   key={img.id}
-                  className={`relative ${getAspectClass(loftGallery.aspect)} overflow-hidden border border-white/[0.08]`}
+                  className={`relative ${getAspectClass(loftGallery.aspect)} overflow-hidden border border-white/[0.08] cursor-pointer active:opacity-80 transition-opacity`}
+                  onClick={() => openLightbox(loftGallery.images.map((m) => m.url), i)}
                 >
                   <img
                     src={img.url}
@@ -205,10 +211,11 @@ export default function HomePage() {
               <div className="flex-1 h-px bg-white/[0.06]" />
             </div>
             <div className={`grid ${getGridCols(kuziiniGallery.slots)} gap-1.5`}>
-              {kuziiniGallery.images.slice(0, kuziiniGallery.slots).map((img) => (
+              {kuziiniGallery.images.slice(0, kuziiniGallery.slots).map((img, i) => (
                 <div
                   key={img.id}
-                  className={`relative ${getAspectClass(kuziiniGallery.aspect)} overflow-hidden border border-white/[0.08]`}
+                  className={`relative ${getAspectClass(kuziiniGallery.aspect)} overflow-hidden border border-white/[0.08] cursor-pointer active:opacity-80 transition-opacity`}
+                  onClick={() => openLightbox(kuziiniGallery.images.map((m) => m.url), i)}
                 >
                   <img
                     src={img.url}
@@ -263,9 +270,151 @@ export default function HomePage() {
         </div>
 
         <p className="text-white/10 text-[10px] text-center tracking-wider">
-          &copy; 2026 Kuziini &times; LOFT. Toate drepturile rezervate. Dezvoltat de Kuziini Furniture Luxuri and More.
+          &copy; 2026 Kuziini &times; LOFT. Toate drepturile rezervate.
         </p>
       </footer>
+
+      {/* Developer credit bar */}
+      <div className="bg-white py-3 px-5">
+        <p className="text-[#0A0A0A] text-[10px] text-center tracking-wider font-medium">
+          Dezvoltat de Kuziini Furniture Luxuri and More.
+        </p>
+      </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <Lightbox
+          images={lightbox.images}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function Lightbox({
+  images,
+  index,
+  onClose,
+}: {
+  images: string[];
+  index: number;
+  onClose: () => void;
+}) {
+  const [current, setCurrent] = useState(index);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const goNext = useCallback(() => {
+    setCurrent((c) => (c < images.length - 1 ? c + 1 : c));
+  }, [images.length]);
+
+  const goPrev = useCallback(() => {
+    setCurrent((c) => (c > 0 ? c - 1 : c));
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose, goNext, goPrev]);
+
+  // Prevent body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchStart.current) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const dy = e.changedTouches[0].clientY - touchStart.current.y;
+    // Only handle horizontal swipes (not vertical scroll)
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) goNext();
+      else goPrev();
+    }
+    touchStart.current = null;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 bg-black/95 z-50 flex flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0">
+        <p className="text-white/40 text-xs font-bold tracking-wider">
+          {current + 1} / {images.length}
+        </p>
+        <button
+          onClick={onClose}
+          className="w-10 h-10 flex items-center justify-center bg-white/10 active:bg-white/20 transition-colors"
+        >
+          <X className="w-5 h-5 text-white/70" />
+        </button>
+      </div>
+
+      {/* Image area */}
+      <div className="flex-1 flex items-center justify-center px-4 min-h-0 relative">
+        {/* Previous button */}
+        {current > 0 && (
+          <button
+            onClick={goPrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/10 active:bg-white/20 transition-colors z-10"
+          >
+            <ChevronLeft className="w-5 h-5 text-white/70" />
+          </button>
+        )}
+
+        <img
+          key={current}
+          src={images[current]}
+          alt=""
+          className="max-w-full max-h-full object-contain animate-fade-in"
+        />
+
+        {/* Next button */}
+        {current < images.length - 1 && (
+          <button
+            onClick={goNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/10 active:bg-white/20 transition-colors z-10"
+          >
+            <ChevronRight className="w-5 h-5 text-white/70" />
+          </button>
+        )}
+      </div>
+
+      {/* Thumbnail strip */}
+      <div className="shrink-0 px-4 py-3 overflow-x-auto">
+        <div className="flex gap-2 justify-center">
+          {images.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-12 h-12 shrink-0 overflow-hidden border-2 transition-all ${
+                i === current
+                  ? "border-[#C9AB81] opacity-100"
+                  : "border-transparent opacity-40"
+              }`}
+            >
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
