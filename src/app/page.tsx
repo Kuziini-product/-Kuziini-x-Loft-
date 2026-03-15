@@ -62,6 +62,18 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 text-center px-5 w-full max-w-lg">
+          {/* LOFT + Mamaia centered */}
+          <div className="mb-6">
+            <img
+              src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
+              alt="LOFT"
+              className="h-10 object-contain mx-auto mb-1"
+            />
+            <p className="text-white text-sm font-light tracking-[0.5em] uppercase">
+              Mamaia
+            </p>
+          </div>
+
           {/* Logo Kuziini */}
           <a href="https://www.instagram.com/kuziiniconceptstore/" target="_blank" rel="noopener noreferrer" className="block mx-auto mb-8 w-fit">
             <Image
@@ -77,16 +89,11 @@ export default function HomePage() {
           <div className="flex items-center justify-center gap-4 mb-5">
             <span className="text-xl font-bold tracking-[0.2em] uppercase">Kuziini</span>
             <span className="text-xl font-bold text-[#C9AB81]">×</span>
-            <img
-              src="https://loftlounge.ro/wp-content/uploads/2025/07/LOFT-White-Transparent-LOGO-1024x330.png"
-              alt="LOFT"
-              className="h-7 object-contain"
-            />
+            <span className="text-xl font-bold tracking-[0.2em] uppercase">LOFT</span>
           </div>
 
-          <p className="text-white/40 text-xs mb-1 italic tracking-wide">
-            &ldquo;The best restaurant is a club,
-            and the best club is a restaurant.&rdquo;
+          <p className="text-white/40 text-xs mb-1 italic tracking-wide leading-relaxed">
+            &ldquo;The best restaurant is a club, and the best club is a restaurant.&rdquo;
           </p>
           <p className="text-[#C9AB81] text-[10px] tracking-[0.4em] uppercase mb-10">
             Mamaia Nord
