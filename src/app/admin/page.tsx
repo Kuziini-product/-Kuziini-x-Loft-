@@ -193,7 +193,26 @@ export default function AdminPage() {
   const [selectedAccessUser, setSelectedAccessUser] = useState<AccessUser | null>(null);
   const [galleryStats, setGalleryStats] = useState<GalleryStatsData | null>(null);
   const [selectedGalleryUser, setSelectedGalleryUser] = useState<GalleryUserStat | null>(null);
+  const [onlineCount, setOnlineCount] = useState(0);
   const autoLoginDone = useRef(false);
+
+  // Poll online users count
+  useEffect(() => {
+    if (!authenticated) return;
+    function fetchOnline() {
+      fetch("/api/access-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getOnline" }),
+      })
+        .then((r) => r.json())
+        .then((j) => { if (j.success) setOnlineCount(j.online); })
+        .catch(() => {});
+    }
+    fetchOnline();
+    const interval = setInterval(fetchOnline, 30_000);
+    return () => clearInterval(interval);
+  }, [authenticated]);
 
   // Clear unread when viewing Rapoarte tab
   useEffect(() => {
@@ -410,6 +429,14 @@ export default function AdminPage() {
             <p className="text-[#C9AB81] text-[10px] tracking-[0.2em] uppercase">Kuziini × LOFT</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Online users badge */}
+            <div className="h-9 flex items-center gap-1.5 px-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              {onlineCount}
+            </div>
             <a
               href="/"
               className="h-9 flex items-center gap-1.5 px-3 bg-[#C9AB81]/20 border border-[#C9AB81]/30 text-[#C9AB81] text-[10px] font-bold tracking-wider uppercase active:bg-[#C9AB81]/30 transition-colors"

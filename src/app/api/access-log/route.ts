@@ -16,6 +16,7 @@ export interface AccessEntry {
 // KV keys
 const ACCESS_LOG_KEY = "access:log";
 const UNREAD_COUNT_KEY = "access:unread";
+const ONLINE_USERS_KEY = "access:online";
 
 async function getLog(): Promise<AccessEntry[]> {
   return kvGet<AccessEntry[]>(ACCESS_LOG_KEY, []);
@@ -72,6 +73,35 @@ export async function POST(req: NextRequest) {
     await setUnread(unread + 1);
 
     return NextResponse.json({ success: true, unread: unread + 1 });
+  }
+
+  // ── Public: heartbeat (ping) ──
+  if (action === "ping") {
+    const { phone } = body as { phone: string };
+    if (!phone) {
+      return NextResponse.json({ success: true });
+    }
+    const online = await kvGet<Record<string, number>>(ONLINE_USERS_KEY, {});
+    online[phone] = Date.now();
+    // Clean up users inactive > 5 min
+    const cutoff = Date.now() - 5 * 60 * 1000;
+    for (const [k, t] of Object.entries(online)) {
+      if (t < cutoff) delete online[k];
+    }
+    await kvSet(ONLINE_USERS_KEY, online);
+    return NextResponse.json({ success: true, online: Object.keys(online).length });
+  }
+
+  // ── Public/Admin: get online count ──
+  if (action === "getOnline") {
+    const online = await kvGet<Record<string, number>>(ONLINE_USERS_KEY, {});
+    // Clean stale
+    const cutoff = Date.now() - 5 * 60 * 1000;
+    let count = 0;
+    for (const [, t] of Object.entries(online)) {
+      if (t >= cutoff) count++;
+    }
+    return NextResponse.json({ success: true, online: count });
   }
 
   // ── Admin: get log & unread count ──
