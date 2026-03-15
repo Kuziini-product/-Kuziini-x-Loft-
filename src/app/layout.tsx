@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/layout/Providers";
 import { ServiceWorkerRegister } from "@/components/layout/ServiceWorkerRegister";
+import { InstallPrompt } from "@/components/layout/InstallPrompt";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-body bg-cream antialiased">
         <ServiceWorkerRegister />
         <Providers>{children}</Providers>
+        <InstallPrompt />
       </body>
     </html>
   );
