@@ -190,6 +190,7 @@ export default function HomePage() {
             <ScrollableGallery
               gallery={kuziiniGallery}
               onImageClick={(allUrls, idx) => openLightbox(allUrls, idx, true)}
+              showLikes
             />
           </div>
         )}
@@ -267,13 +268,28 @@ export default function HomePage() {
 function ScrollableGallery({
   gallery,
   onImageClick,
+  showLikes,
 }: {
   gallery: GalleryData;
   onImageClick: (allUrls: string[], idx: number) => void;
+  showLikes?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const allUrls = gallery.images.map((m) => m.url);
   const aspectClass = getAspectClass(gallery.aspect);
+  const [photoLikes, setPhotoLikes] = useState<Record<string, { likes: number }>>({});
+
+  useEffect(() => {
+    if (!showLikes) return;
+    fetch("/api/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "getPhotoStats", sessionId: "" }),
+    })
+      .then((r) => r.json())
+      .then((j) => { if (j.success) setPhotoLikes(j.data); })
+      .catch(() => {});
+  }, [showLikes]);
 
   // Group images into pages based on slots
   const pages: GalleryImage[][] = [];
@@ -307,6 +323,14 @@ function ScrollableGallery({
                     loading="lazy"
                     className="w-full h-full object-cover"
                   />
+                  {showLikes && (photoLikes[`kuziini-${globalIdx}`]?.likes || 0) > 0 && (
+                    <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-sm">
+                      <Heart className="w-3 h-3 text-red-500 fill-red-500" />
+                      <span className="text-white text-[10px] font-bold">
+                        {photoLikes[`kuziini-${globalIdx}`].likes}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
