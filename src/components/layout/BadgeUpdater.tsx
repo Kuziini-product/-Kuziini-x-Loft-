@@ -4,19 +4,10 @@ import { useEffect } from "react";
 
 export function BadgeUpdater() {
   useEffect(() => {
-    // Only run in standalone/PWA mode
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true;
-
-    if (!isStandalone) return;
-
     const nav = navigator as Navigator & {
       setAppBadge?: (count: number) => Promise<void>;
       clearAppBadge?: () => Promise<void>;
     };
-
-    if (!nav.setAppBadge) return;
 
     async function updateBadge() {
       try {
@@ -27,9 +18,14 @@ export function BadgeUpdater() {
         });
         const json = await res.json();
         if (json.success && json.unread > 0) {
-          await nav.setAppBadge?.(json.unread);
+          // Update page title with notification count
+          const baseTitle = "Kuziini x LOFT";
+          document.title = `(${json.unread}) ${baseTitle}`;
+          // Try native badge API (works in Chrome desktop + PWA)
+          nav.setAppBadge?.(json.unread).catch(() => {});
         } else {
-          await nav.clearAppBadge?.();
+          document.title = "Kuziini x LOFT";
+          nav.clearAppBadge?.().catch(() => {});
         }
       } catch {
         // ignore
