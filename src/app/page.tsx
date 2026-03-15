@@ -532,6 +532,8 @@ function Lightbox({
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number; size: number; duration: number }[]>([]);
   const heartIdRef = useRef(0);
   const trackedViews = useRef<Set<number>>(new Set());
+  const viewStartTime = useRef<number>(Date.now());
+  const currentPhotoRef = useRef<number>(index);
 
   // Get or create anonymous session ID
   const sessionId = useRef("");
@@ -555,16 +557,55 @@ function Lightbox({
     }
   }, [isKuziini]);
 
-  // Track photo view
-  useEffect(() => {
-    if (!isKuziini || !sessionId.current || trackedViews.current.has(current)) return;
-    trackedViews.current.add(current);
+  // Flush duration for previous photo
+  function flushViewDuration() {
+    if (!isKuziini || !sessionId.current) return;
+    const elapsed = Math.round((Date.now() - viewStartTime.current) / 1000);
+    if (elapsed < 1) return; // ignore sub-second views
     fetch("/api/analytics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "trackView", photoIndex: current, sessionId: sessionId.current }),
+      body: JSON.stringify({
+        action: "trackViewDuration",
+        photoIndex: currentPhotoRef.current,
+        sessionId: sessionId.current,
+        duration: elapsed,
+      }),
     }).catch(() => {});
+  }
+
+  // Track photo view + reset timer on photo change
+  useEffect(() => {
+    if (!isKuziini || !sessionId.current) return;
+
+    // Flush previous photo duration
+    if (currentPhotoRef.current !== current) {
+      flushViewDuration();
+    }
+
+    // Start new timer
+    viewStartTime.current = Date.now();
+    currentPhotoRef.current = current;
+
+    // Track view (only once per photo)
+    if (!trackedViews.current.has(current)) {
+      trackedViews.current.add(current);
+      fetch("/api/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trackView", photoIndex: current, sessionId: sessionId.current }),
+      }).catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, isKuziini]);
+
+  // Flush on lightbox close
+  useEffect(() => {
+    return () => {
+      flushViewDuration();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function spawnHearts() {
     const newHearts = Array.from({ length: 8 }, () => {

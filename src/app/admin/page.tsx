@@ -106,6 +106,33 @@ interface AnalyticsData {
 type ClientSort = "spent" | "visits" | "recent" | "orders" | "name";
 type ClientFilter = "all" | "receptie" | "oferta";
 
+interface GalleryUserStat {
+  sessionId: string;
+  photosViewed: number;
+  totalTimeSpent: number;
+  photoDetails: { photoIndex: number; timestamp: string; duration: number }[];
+  likes: number;
+  firstView: string;
+  lastView: string;
+}
+
+interface GalleryPhotoStat {
+  index: number;
+  likes: number;
+  views: number;
+  avgDuration: number;
+  totalDuration: number;
+}
+
+interface GalleryStatsData {
+  users: GalleryUserStat[];
+  photos: GalleryPhotoStat[];
+  hourlyViews: number[];
+  totalViews: number;
+  uniqueViewers: number;
+  totalTimeSpent: number;
+}
+
 interface AccessUser {
   name: string;
   phone: string;
@@ -164,6 +191,8 @@ export default function AdminPage() {
   const [accessData, setAccessData] = useState<AccessData | null>(null);
   const [accessUnread, setAccessUnread] = useState(0);
   const [selectedAccessUser, setSelectedAccessUser] = useState<AccessUser | null>(null);
+  const [galleryStats, setGalleryStats] = useState<GalleryStatsData | null>(null);
+  const [selectedGalleryUser, setSelectedGalleryUser] = useState<GalleryUserStat | null>(null);
   const autoLoginDone = useRef(false);
 
   // Clear unread when viewing Rapoarte tab
@@ -256,6 +285,14 @@ export default function AdminPage() {
       });
       const aJson = await aRes.json();
       if (aJson.success) setAnalyticsData(aJson.data);
+      // Fetch gallery stats
+      const gsRes = await fetch("/api/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw || password, action: "getGalleryStats" }),
+      });
+      const gsJson = await gsRes.json();
+      if (gsJson.success) setGalleryStats(gsJson.data);
       // Fetch access log
       const acRes = await fetch("/api/access-log", {
         method: "POST",
@@ -290,6 +327,16 @@ export default function AdminPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  }
+
+  function formatDuration(seconds: number): string {
+    if (seconds < 60) return `${seconds}s`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m < 60) return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    const h = Math.floor(m / 60);
+    const rm = m % 60;
+    return rm > 0 ? `${h}h ${rm}m` : `${h}h`;
   }
 
   if (!authenticated) {
@@ -727,13 +774,71 @@ export default function AdminPage() {
           <>
             {!analyticsData ? (
               <EmptyMsg text="Se încarcă datele..." />
+            ) : selectedGalleryUser ? (
+              /* ── Gallery user detail view ── */
+              <div>
+                <button
+                  onClick={() => setSelectedGalleryUser(null)}
+                  className="flex items-center gap-1.5 text-[#C9AB81] text-xs font-bold tracking-wider uppercase mb-4"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Înapoi
+                </button>
+                <div className="bg-white/[0.03] border border-white/[0.06] p-4 mb-4">
+                  <p className="font-bold text-lg text-white tracking-wide">{selectedGalleryUser.sessionId.slice(0, 20)}...</p>
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <div className="bg-white/[0.03] px-2 py-2 text-center">
+                      <p className="text-[9px] text-white/30 uppercase tracking-wider">Poze văzute</p>
+                      <p className="text-xl font-bold text-white">{selectedGalleryUser.photosViewed}</p>
+                    </div>
+                    <div className="bg-white/[0.03] px-2 py-2 text-center">
+                      <p className="text-[9px] text-white/30 uppercase tracking-wider">Timp total</p>
+                      <p className="text-xl font-bold text-white">{formatDuration(selectedGalleryUser.totalTimeSpent)}</p>
+                    </div>
+                    <div className="bg-white/[0.03] px-2 py-2 text-center">
+                      <p className="text-[9px] text-white/30 uppercase tracking-wider">Like-uri</p>
+                      <p className="text-xl font-bold text-red-400">{selectedGalleryUser.likes}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-white/20 mt-3">
+                    <span>Prima vizită: {formatTime(selectedGalleryUser.firstView)}</span>
+                    <span>Ultima: {formatTime(selectedGalleryUser.lastView)}</span>
+                  </div>
+                </div>
+
+                <p className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
+                  Poze accesate ({selectedGalleryUser.photoDetails.length})
+                </p>
+                <div className="space-y-2">
+                  {[...selectedGalleryUser.photoDetails].reverse().map((p, i) => (
+                    <div key={i} className="bg-white/[0.03] border border-white/[0.06] p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 flex items-center justify-center bg-purple-500/20 shrink-0">
+                          <Eye className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-white font-bold">Poza #{p.photoIndex + 1}</p>
+                          <div className="flex items-center gap-2 text-[10px] text-white/40">
+                            {p.duration > 0 && (
+                              <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 font-bold tracking-wider">
+                                {formatDuration(p.duration)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-white/30 shrink-0">{formatTime(p.timestamp)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
               <>
                 {/* Summary cards */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <StatCard label="Total clienți" value={analyticsData.clients.length} />
-                  <StatCard label="Vizualizări poze" value={analyticsData.totalPhotoViews} />
-                  <StatCard label="Vizitatori unici galerie" value={analyticsData.uniqueViewers} />
+                  <StatCard label="Vizualizări poze" value={galleryStats?.totalViews || analyticsData.totalPhotoViews} />
+                  <StatCard label="Vizitatori unici galerie" value={galleryStats?.uniqueViewers || analyticsData.uniqueViewers} />
                   <StatCard
                     label="Total cheltuieli"
                     value={formatPrice(analyticsData.clients.reduce((s, c) => s + c.totalSpent, 0))}
@@ -741,25 +846,93 @@ export default function AdminPage() {
                   />
                 </div>
 
-                {/* Photo stats */}
-                {analyticsData.photoStats.length > 0 && (
+                {/* Detailed gallery stats */}
+                {galleryStats && (
                   <div className="bg-white/[0.03] border border-white/[0.06] p-4 mb-4">
                     <h3 className="text-[#C9AB81] text-[10px] font-bold tracking-[0.2em] uppercase mb-3 flex items-center gap-2">
                       <Heart className="w-3.5 h-3.5" />
-                      Popularitate poze Kuziini
+                      Statistici Galerie
                     </h3>
-                    <div className="space-y-2">
-                      {analyticsData.photoStats.map((p) => (
-                        <div key={p.index} className="flex items-center justify-between text-sm">
-                          <span className="text-white/60">Poza {p.index + 1}</span>
-                          <div className="flex items-center gap-4">
-                            <span className="text-white/40 text-xs">{p.views} vizualizări</span>
-                            <span className="flex items-center gap-1 text-red-400 text-xs font-bold">
+
+                    {/* Total time spent */}
+                    <div className="bg-white/[0.03] p-3 mb-3 text-center">
+                      <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Timp total vizualizare</p>
+                      <p className="text-xl font-bold text-[#C9AB81]">{formatDuration(galleryStats.totalTimeSpent)}</p>
+                    </div>
+
+                    {/* Photo breakdown */}
+                    <p className="text-white/30 text-[10px] font-bold tracking-wider uppercase mb-2">Per poză</p>
+                    <div className="space-y-2 mb-4">
+                      {galleryStats.photos.map((p) => (
+                        <div key={p.index} className="bg-white/[0.02] p-2.5 flex items-center justify-between">
+                          <span className="text-white/60 text-xs font-bold">Poza #{p.index + 1}</span>
+                          <div className="flex items-center gap-3 text-[10px]">
+                            <span className="text-white/40">{p.views} vizualizări</span>
+                            <span className="text-blue-400 font-bold">{formatDuration(p.avgDuration)} mediu</span>
+                            <span className="flex items-center gap-1 text-red-400 font-bold">
                               <Heart className="w-3 h-3 fill-red-400" />
                               {p.likes}
                             </span>
                           </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Hourly distribution */}
+                    <p className="text-white/30 text-[10px] font-bold tracking-wider uppercase mb-2">Vizualizări pe ore</p>
+                    <div className="flex items-end gap-0.5 h-16 mb-1">
+                      {galleryStats.hourlyViews.map((count, hour) => {
+                        const max = Math.max(...galleryStats.hourlyViews, 1);
+                        const h = Math.max((count / max) * 100, count > 0 ? 8 : 2);
+                        return (
+                          <div
+                            key={hour}
+                            className={`flex-1 rounded-t-sm transition-all ${count > 0 ? "bg-[#C9AB81]" : "bg-white/10"}`}
+                            style={{ height: `${h}%` }}
+                            title={`${hour}:00 — ${count} vizualizări`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-[8px] text-white/20">
+                      <span>00:00</span>
+                      <span>06:00</span>
+                      <span>12:00</span>
+                      <span>18:00</span>
+                      <span>23:00</span>
+                    </div>
+
+                    {/* Per-user gallery stats */}
+                    <p className="text-white/30 text-[10px] font-bold tracking-wider uppercase mt-4 mb-2">
+                      Vizitatori unici ({galleryStats.users.length})
+                    </p>
+                    <div className="space-y-2">
+                      {galleryStats.users.map((u) => (
+                        <button
+                          key={u.sessionId}
+                          onClick={() => setSelectedGalleryUser(u)}
+                          className="w-full bg-white/[0.02] p-3 text-left active:bg-white/[0.06] transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-white font-bold">{u.sessionId.slice(0, 24)}...</p>
+                              <div className="flex items-center gap-3 text-[10px] text-white/40 mt-1">
+                                <span>{u.photosViewed} poze</span>
+                                <span className="text-blue-400">{formatDuration(u.totalTimeSpent)}</span>
+                                {u.likes > 0 && (
+                                  <span className="flex items-center gap-1 text-red-400">
+                                    <Heart className="w-2.5 h-2.5 fill-red-400" />
+                                    {u.likes}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[9px] text-white/15 mt-0.5">
+                                {formatTime(u.firstView)} — {formatTime(u.lastView)}
+                              </div>
+                            </div>
+                            <ChevronRight className="w-3.5 h-3.5 text-white/20 shrink-0" />
+                          </div>
+                        </button>
                       ))}
                     </div>
                   </div>

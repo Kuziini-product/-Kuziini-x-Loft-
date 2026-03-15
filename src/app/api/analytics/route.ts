@@ -40,11 +40,18 @@ async function savePhotoStats(stats: Record<string, PhotoStats>) {
   await kvSet("analytics:photos", stats);
 }
 
-async function getViewLog(): Promise<{ sessionId: string; photoIndex: number; timestamp: string }[]> {
+interface ViewLogEntry {
+  sessionId: string;
+  photoIndex: number;
+  timestamp: string;
+  duration?: number; // seconds spent viewing
+}
+
+async function getViewLog(): Promise<ViewLogEntry[]> {
   return kvGet("analytics:view_log", []);
 }
 
-async function saveViewLog(log: { sessionId: string; photoIndex: number; timestamp: string }[]) {
+async function saveViewLog(log: ViewLogEntry[]) {
   // Keep last 5000 entries
   const trimmed = log.slice(-5000);
   await kvSet("analytics:view_log", trimmed);
@@ -98,6 +105,24 @@ export async function POST(req: NextRequest) {
     log.push({ sessionId, photoIndex, timestamp: new Date().toISOString() });
     await saveViewLog(log);
 
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === "trackViewDuration") {
+    const { photoIndex, sessionId, duration } = body as { photoIndex: number; sessionId: string; duration: number };
+    if (photoIndex === undefined || !sessionId || !duration) {
+      return NextResponse.json({ success: false, error: "Missing data." }, { status: 400 });
+    }
+    // Find and update the matching view log entry (most recent one for this session+photo)
+    const log = await getViewLog();
+    // Find last entry for this session+photo that doesn't have duration yet
+    for (let i = log.length - 1; i >= 0; i--) {
+      if (log[i].sessionId === sessionId && log[i].photoIndex === photoIndex && !log[i].duration) {
+        log[i].duration = Math.min(duration, 600); // cap at 10 min
+        break;
+      }
+    }
+    await saveViewLog(log);
     return NextResponse.json({ success: true });
   }
 
@@ -220,6 +245,83 @@ export async function POST(req: NextRequest) {
         photoStats: photoSummary.sort((a, b) => b.likes - a.likes),
         totalPhotoViews,
         uniqueViewers,
+      },
+    });
+  }
+
+  if (action === "getGalleryStats") {
+    const viewLog = await getViewLog();
+    const photoStats = await getPhotoStats();
+
+    // Build per-user gallery stats
+    const userMap: Record<string, {
+      sessionId: string;
+      photosViewed: number;
+      totalTimeSpent: number; // seconds
+      photoDetails: { photoIndex: number; timestamp: string; duration: number }[];
+      likes: number;
+      firstView: string;
+      lastView: string;
+    }> = {};
+
+    viewLog.forEach((entry) => {
+      if (!userMap[entry.sessionId]) {
+        userMap[entry.sessionId] = {
+          sessionId: entry.sessionId,
+          photosViewed: 0,
+          totalTimeSpent: 0,
+          photoDetails: [],
+          likes: 0,
+          firstView: entry.timestamp,
+          lastView: entry.timestamp,
+        };
+      }
+      const u = userMap[entry.sessionId];
+      u.photosViewed++;
+      u.totalTimeSpent += entry.duration || 0;
+      u.photoDetails.push({
+        photoIndex: entry.photoIndex,
+        timestamp: entry.timestamp,
+        duration: entry.duration || 0,
+      });
+      if (entry.timestamp < u.firstView) u.firstView = entry.timestamp;
+      if (entry.timestamp > u.lastView) u.lastView = entry.timestamp;
+    });
+
+    // Count likes per user
+    for (const [, val] of Object.entries(photoStats)) {
+      val.likedBy.forEach((sid) => {
+        if (userMap[sid]) userMap[sid].likes++;
+      });
+    }
+
+    // Photo summary with avg duration
+    const photoSummary: { index: number; likes: number; views: number; avgDuration: number; totalDuration: number }[] = [];
+    for (const [key, val] of Object.entries(photoStats)) {
+      const idx = parseInt(key.replace("kuziini-", ""));
+      const viewsForPhoto = viewLog.filter((v) => v.photoIndex === idx);
+      const durations = viewsForPhoto.filter((v) => v.duration).map((v) => v.duration!);
+      const totalDur = durations.reduce((s, d) => s + d, 0);
+      const avgDur = durations.length > 0 ? Math.round(totalDur / durations.length) : 0;
+      photoSummary.push({ index: idx, likes: val.likes, views: val.views, avgDuration: avgDur, totalDuration: totalDur });
+    }
+
+    // Hourly distribution
+    const hourlyViews: number[] = new Array(24).fill(0);
+    viewLog.forEach((v) => {
+      const hour = new Date(v.timestamp).getHours();
+      hourlyViews[hour]++;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        users: Object.values(userMap).sort((a, b) => b.totalTimeSpent - a.totalTimeSpent),
+        photos: photoSummary.sort((a, b) => b.views - a.views),
+        hourlyViews,
+        totalViews: viewLog.length,
+        uniqueViewers: Object.keys(userMap).length,
+        totalTimeSpent: Object.values(userMap).reduce((s, u) => s + u.totalTimeSpent, 0),
       },
     });
   }
