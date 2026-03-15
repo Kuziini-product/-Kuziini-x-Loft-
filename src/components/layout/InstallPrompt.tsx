@@ -113,12 +113,21 @@ export function InstallPrompt() {
             Instalează aplicația
           </button>
         ) : isIos ? (
-          <div className="mt-3 bg-white/5 rounded-lg p-3">
-            <div className="flex items-center justify-center gap-2 text-white/70 text-xs">
-              <span>Apasă</span>
-              <Share className="w-4 h-4 text-[#C9AB81]" />
-              <span>apoi</span>
-              <span className="text-[#C9AB81] font-semibold">&quot;Add to Home Screen&quot;</span>
+          <div className="mt-3 bg-white/5 rounded-lg p-3 space-y-2">
+            <p className="text-white/50 text-[10px] text-center uppercase tracking-wider">Cum se instalează:</p>
+            <div className="flex items-center gap-3 text-white/80 text-xs">
+              <span className="w-5 h-5 rounded-full bg-[#C9AB81] text-[#0A0A0A] flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+              <span>Apasă butonul</span>
+              <Share className="w-4 h-4 text-[#C9AB81] shrink-0" />
+              <span className="text-white/50">(jos în Safari)</span>
+            </div>
+            <div className="flex items-center gap-3 text-white/80 text-xs">
+              <span className="w-5 h-5 rounded-full bg-[#C9AB81] text-[#0A0A0A] flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+              <span>Alege <span className="text-[#C9AB81] font-semibold">Add to Home Screen</span></span>
+            </div>
+            <div className="flex items-center gap-3 text-white/80 text-xs">
+              <span className="w-5 h-5 rounded-full bg-[#C9AB81] text-[#0A0A0A] flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+              <span>Apasă <span className="text-[#C9AB81] font-semibold">Add</span></span>
             </div>
           </div>
         ) : null}
